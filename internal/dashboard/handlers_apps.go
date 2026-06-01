@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/graditya/prospector/internal/db"
 )
@@ -13,12 +14,7 @@ import (
 var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted"}
 
 func isValidStatus(s string) bool {
-	for _, v := range validStatuses {
-		if s == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validStatuses, s)
 }
 
 type appsListData struct {
