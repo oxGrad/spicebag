@@ -35,11 +35,13 @@ func (s *Server) checkGotenberg() bool {
 
 // waitForGotenberg retries checkGotenberg up to maxAttempts times with 1-second pauses.
 func (s *Server) waitForGotenberg(maxAttempts int) bool {
-	for range maxAttempts {
+	for i := range maxAttempts {
 		if s.checkGotenberg() {
 			return true
 		}
-		time.Sleep(time.Second)
+		if i < maxAttempts-1 {
+			time.Sleep(time.Second)
+		}
 	}
 	return false
 }
