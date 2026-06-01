@@ -25,13 +25,35 @@ No more generic CVs. Just perfectly seasoned applications for every role you app
 
 ## Installation
 
+### Option A — Claude Plugin Marketplace
+
+If you use Claude Code's plugin system, install directly from the marketplace.
+
+**1. Add the marketplace** (first time only):
+
+```bash
+claude plugin marketplace add https://spicebag.graditya.com
+```
+
+**2. Install the plugin:**
+
+```bash
+claude plugin install spicebag@spicebag
+```
+
+This installs the binary, registers the MCP server, installs default themes, and adds slash commands automatically — no need to run `spicebag init` separately.
+
+---
+
+### Option B — go install
+
 ### 1. Add your spices to the bag
 
 ```bash
 go install github.com/oxGrad/spicebag/cmd/spicebag@latest
 ```
 
-### 2. Season your workspace
+### 2. Season your workspace (Option B only)
 
 ```bash
 spicebag init
