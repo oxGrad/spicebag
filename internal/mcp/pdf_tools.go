@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	pdfpkg "github.com/graditya/prospector/internal/pdf"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
@@ -37,7 +38,11 @@ func (s *Server) registerPDFTools() {
 				return mcplib.NewToolResultError(fmt.Sprintf("rendering PDF: %v", err)), nil
 			}
 
-			outPath := filepath.Join(s.root, filePath[:len(filePath)-3]+".pdf")
+			ext := filepath.Ext(filePath)
+			if ext != ".md" {
+				return mcplib.NewToolResultError(fmt.Sprintf("file_path must be a .md file, got %q", filePath)), nil
+			}
+			outPath := filepath.Join(s.root, strings.TrimSuffix(filePath, ext)+".pdf")
 			if err := os.WriteFile(outPath, pdfBytes, 0644); err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("writing PDF: %v", err)), nil
 			}

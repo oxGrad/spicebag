@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 )
@@ -18,7 +19,10 @@ func (s *Server) registerExperienceTools() {
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}
-			out, _ := json.Marshal(stats)
+			out, err := json.Marshal(stats)
+			if err != nil {
+				return mcplib.NewToolResultError(fmt.Sprintf("marshal stats: %v", err)), nil
+			}
 			return mcplib.NewToolResultText(string(out)), nil
 		},
 	)
