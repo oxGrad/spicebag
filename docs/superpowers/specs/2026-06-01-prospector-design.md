@@ -224,13 +224,33 @@ prospector/
     minimal.css
     modern.css
   docker-compose.yml      ← Gotenberg service definition
-  plugin.json             ← Claude marketplace manifest
-  install.sh              ← setup script
+  plugin.json             ← Claude marketplace manifest (skills + MCP config only)
+  Formula/
+    prospector.rb         ← Homebrew formula
   README.md
 ```
 
-### `plugin.json` (Claude marketplace manifest)
-The exact manifest schema is defined by the Claude plugin marketplace. The fields below are illustrative — confirm against the official plugin publishing docs when packaging.
+### Distribution: two separate concerns
+
+**Binary distribution — Homebrew:**
+The `prospector` binary is distributed via Homebrew. The formula:
+1. Installs the pre-compiled binary to PATH
+2. Installs default themes to `~/.config/prospector/themes/`
+3. Installs `docker-compose.yml` to `~/.config/prospector/`
+4. Runs `prospector init` on post-install to create `~/.config/prospector/` structure and default `config.toml`
+
+```
+brew install graditya/tap/prospector
+```
+
+**`prospector init` subcommand** (also callable manually, idempotent):
+1. Create `~/.config/prospector/` directory structure
+2. Write default `config.toml` if not present
+3. Register `prospector mcp` in Claude Code's MCP config
+4. Print next steps: install Claude plugin, run `prospector up`, run `prospector serve`
+
+**Claude Code plugin — marketplace:**
+Lightweight package: only skills and MCP config. Does not install the binary — assumes `prospector` is already on PATH via Homebrew (or built from source). The exact manifest schema is defined by the Claude plugin marketplace; confirm against official publishing docs when packaging.
 
 ```json
 {
@@ -242,17 +262,24 @@ The exact manifest schema is defined by the Claude plugin marketplace. The field
     "command": "prospector",
     "args": ["mcp"]
   },
-  "skills": ["skills/customize-cv.md", "skills/write-cover-letter.md", "skills/apply.md"],
-  "install": "install.sh"
+  "skills": ["skills/customize-cv.md", "skills/write-cover-letter.md", "skills/apply.md"]
 }
 ```
 
-### `install.sh` responsibilities
-1. Create `~/.config/prospector/` directory structure
-2. Copy default themes to `~/.config/prospector/themes/`
-3. Create default `config.toml` if not present
-4. Register MCP server in Claude Code's MCP config (`~/.claude/mcp.json` or project-level)
-5. Print next steps: run `prospector up`, run `prospector serve`, add first CV
+### Full install flow
+```bash
+# 1. Install binary via Homebrew
+brew install graditya/tap/prospector
+
+# 2. Install Claude Code plugin from marketplace
+#    (adds slash commands + MCP registration)
+
+# 3. Start Gotenberg
+prospector up
+
+# 4. Start dashboard
+prospector serve
+```
 
 ---
 
