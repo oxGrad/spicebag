@@ -25,19 +25,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-func newInitCmd() *cobra.Command {
-	return &cobra.Command{Use: "init", Short: "Set up ~/.config/prospector"}
-}
-
-func newMCPCmd() *cobra.Command {
-	return &cobra.Command{Use: "mcp", Short: "Start MCP server"}
-}
-
-func newUpCmd() *cobra.Command {
-	return &cobra.Command{Use: "up", Short: "Start Gotenberg"}
-}
-
-func newSyncCmd() *cobra.Command {
-	return &cobra.Command{Use: "sync", Short: "Sync experience data"}
-}
