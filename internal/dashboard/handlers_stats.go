@@ -4,6 +4,7 @@ package dashboard
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/graditya/prospector/internal/db"
@@ -29,8 +30,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := t.ExecuteTemplate(w, "layout", statsPageData{Stats: stats}); err != nil {
-		// log but can't write 500 (headers already sent)
-		_ = err
+		log.Printf("handleStats: %v", err)
 	}
 }
 
