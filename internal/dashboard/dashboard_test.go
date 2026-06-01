@@ -13,6 +13,7 @@ import (
 	"github.com/graditya/prospector/internal/config"
 	"github.com/graditya/prospector/internal/dashboard"
 	"github.com/graditya/prospector/internal/db"
+	"github.com/graditya/prospector/internal/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,4 +80,28 @@ func TestAppStatusUpdate(t *testing.T) {
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "interview")
+}
+
+func TestCVListRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV"))
+
+	req := httptest.NewRequest(http.MethodGet, "/cv", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.md")
+}
+
+func TestCVViewRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV\n\nContent here."))
+
+	req := httptest.NewRequest(http.MethodGet, "/cv/cv-backend-2025-01-01.md", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Backend CV")
 }
