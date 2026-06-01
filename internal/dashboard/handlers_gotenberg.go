@@ -33,6 +33,17 @@ func (s *Server) checkGotenberg() bool {
 	return resp.StatusCode == http.StatusOK
 }
 
+// waitForGotenberg retries checkGotenberg up to maxAttempts times with 1-second pauses.
+func (s *Server) waitForGotenberg(maxAttempts int) bool {
+	for i := 0; i < maxAttempts; i++ {
+		if s.checkGotenberg() {
+			return true
+		}
+		time.Sleep(time.Second)
+	}
+	return false
+}
+
 func (s *Server) defaultRunCompose(args ...string) error {
 	composePath := filepath.Join(s.root, "docker-compose.yml")
 	baseArgs := append([]string{"compose", "-f", composePath}, args...)
@@ -65,8 +76,10 @@ func (s *Server) handleGotenbergStart(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.runCompose("up", "-d"); err != nil {
 		data.Err = err.Error()
+		data.Running = s.checkGotenberg()
+	} else {
+		data.Running = s.waitForGotenberg(5)
 	}
-	data.Running = s.checkGotenberg()
 	s.renderPartial(w, "gotenberg_status.html", "gotenberg-status", data)
 }
 
