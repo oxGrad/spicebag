@@ -47,7 +47,7 @@ func (s *Server) handleThemePreview(w http.ResponseWriter, r *http.Request) {
 	s.render(w, "themes.html", themesPageData{
 		Themes:         themes,
 		PreviewTheme:   name,
-		PreviewStyle:   template.HTML("<style>" + css + "</style>"),
+		PreviewStyle:   template.HTML("<style>" + strings.ReplaceAll(css, "</style>", `<\/style>`) + "</style>"),
 		PreviewContent: RenderMarkdown(previewMD),
 	})
 }
@@ -137,9 +137,15 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// derive filename for download
+	// derive filename for download; sanitize for Content-Disposition header
 	base := filepath.Base(filePath)
 	pdfName := strings.TrimSuffix(base, filepath.Ext(base)) + ".pdf"
+	pdfName = strings.Map(func(r rune) rune {
+		if r == '"' || r == '\n' || r == '\r' {
+			return '_'
+		}
+		return r
+	}, pdfName)
 
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, pdfName))

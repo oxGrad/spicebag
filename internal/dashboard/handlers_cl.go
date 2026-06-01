@@ -4,6 +4,7 @@ package dashboard
 import (
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/graditya/prospector/internal/fs"
 )
@@ -43,7 +44,7 @@ func (s *Server) handleCLView(w http.ResponseWriter, r *http.Request) {
 	var themeStyle template.HTML
 	if selectedTheme != "" {
 		if css, err := fs.ReadTheme(s.root, selectedTheme); err == nil {
-			themeStyle = template.HTML("<style>" + css + "</style>")
+			themeStyle = template.HTML("<style>" + strings.ReplaceAll(css, "</style>", `<\/style>`) + "</style>")
 		}
 	}
 

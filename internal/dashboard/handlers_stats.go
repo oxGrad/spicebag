@@ -61,7 +61,9 @@ func (s *Server) handleStatsSync(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(dbEntries) > 0 {
-			s.store.UpsertExperience(dbEntries)
+			if err := s.store.UpsertExperience(dbEntries); err != nil {
+				log.Printf("handleStatsSync: upsert %s: %v", f.Name, err)
+			}
 		}
 	}
 
