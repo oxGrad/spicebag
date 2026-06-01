@@ -18,6 +18,8 @@ func main() {
 		newMCPCmd(),
 		newUpCmd(),
 		newSyncCmd(),
+		newServeCmd(),
+		newStopCmd(),
 	)
 
 	if err := root.Execute(); err != nil {
