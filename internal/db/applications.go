@@ -1,6 +1,11 @@
 package db
 
-import "time"
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"time"
+)
 
 type Application struct {
 	ID          int64
@@ -129,6 +134,9 @@ func (s *Store) GetApplicationByID(id int64) (Application, error) {
 		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path FROM applications WHERE id = ?`,
 		id,
 	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Application{}, fmt.Errorf("application %d not found: %w", id, sql.ErrNoRows)
+	}
 	return a, err
 }
 

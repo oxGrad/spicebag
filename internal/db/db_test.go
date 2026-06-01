@@ -1,6 +1,8 @@
 package db_test
 
 import (
+	"database/sql"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -155,5 +157,21 @@ func TestGetApplicationByID(t *testing.T) {
 func TestGetApplicationByIDNotFound(t *testing.T) {
 	store := openTestStore(t)
 	_, err := store.GetApplicationByID(9999)
-	assert.Error(t, err)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, sql.ErrNoRows), "expected sql.ErrNoRows, got: %v", err)
+}
+
+func TestListApplicationsWithStatusNoHistory(t *testing.T) {
+	store := openTestStore(t)
+
+	_, err := store.UpsertApplication(db.Application{
+		Company: "Ghost", Role: "Dev",
+		AppliedDate: "2025-01-01", FolderPath: "ghost/dev/2025-01-01",
+	})
+	require.NoError(t, err)
+
+	apps, err := store.ListApplicationsWithStatus()
+	require.NoError(t, err)
+	require.Len(t, apps, 1)
+	assert.Equal(t, "unknown", apps[0].CurrentStatus)
 }
