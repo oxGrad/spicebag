@@ -1,7 +1,7 @@
 package db
 
 type ExperienceEntry struct {
-	ID         int
+	ID         int64
 	RoleType   string
 	Company    string
 	StartDate  string
