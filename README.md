@@ -32,7 +32,7 @@ If you use Claude Code's plugin system, install directly from the marketplace.
 **1. Add the marketplace** (first time only):
 
 ```bash
-claude plugin marketplace add https://spicebag.graditya.com
+claude plugin marketplace add oxGrad/spicebag
 ```
 
 **2. Install the plugin:**

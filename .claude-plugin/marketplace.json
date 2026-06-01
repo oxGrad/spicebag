@@ -1,0 +1,22 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/gh/anthropics/claude-code@main/plugins/marketplace-schema.json",
+  "name": "spicebag",
+  "description": "Season every application perfectly — CV and cover letter manager for Claude Code",
+  "owner": {
+    "name": "oxGrad",
+    "email": "dev@graditya.com"
+  },
+  "plugins": [
+    {
+      "name": "spicebag",
+      "displayName": "Spice Bag",
+      "source": "./",
+      "description": "AI-powered CV and cover letter tailoring for every job application",
+      "homepage": "https://spicebag.graditya.com",
+      "repository": "https://github.com/oxGrad/spicebag",
+      "license": "MIT",
+      "keywords": ["cv", "cover-letter", "job-application", "claude-code"],
+      "category": "productivity"
+    }
+  ]
+}
