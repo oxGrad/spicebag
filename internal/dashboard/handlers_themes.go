@@ -64,7 +64,7 @@ func (s *Server) handleThemeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	name := header.Filename
+	name := filepath.Base(header.Filename) // strip any directory components
 	if !strings.HasSuffix(name, ".css") {
 		http.Error(w, "file must be a .css file", http.StatusBadRequest)
 		return
@@ -104,8 +104,16 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// guard against path traversal
+	rootClean := filepath.Clean(s.root)
+	resolved := filepath.Join(rootClean, filePath)
+	if !strings.HasPrefix(resolved, rootClean+string(os.PathSeparator)) {
+		http.Error(w, "invalid file_path", http.StatusBadRequest)
+		return
+	}
+
 	// read the markdown file
-	mdBytes, err := os.ReadFile(filepath.Join(s.root, filePath))
+	mdBytes, err := os.ReadFile(resolved)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("read file: %v", err), http.StatusNotFound)
 		return
