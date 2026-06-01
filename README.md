@@ -39,13 +39,7 @@ spicebag init
 
 This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes to `~/.config/spicebag/themes/`, and installs slash commands to `~/.claude/commands/spicebag/`.
 
-### 3. Fire up the kitchen
-
-```bash
-spicebag up      # starts Gotenberg (PDF export service) via docker compose
-```
-
-### 4. Open the dashboard
+### 3. Open the dashboard
 
 ```bash
 spicebag serve        # foreground
@@ -82,7 +76,6 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 | Command | Description |
 |---|---|
 | `spicebag init` | First-time setup: config dir, MCP registration, themes, slash commands |
-| `spicebag up` | Start Gotenberg via docker compose |
 | `spicebag serve` | Start the dashboard (foreground) |
 | `spicebag serve -d` | Start the dashboard (background) |
 | `spicebag stop` | Stop the background dashboard server |
