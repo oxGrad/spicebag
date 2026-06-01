@@ -1,0 +1,13 @@
+{{define "status_history"}}
+<div id="status-history" class="space-y-2">
+  {{range .}}
+  <div class="flex items-center gap-3 text-sm">
+    <span class="text-gray-400 w-36 shrink-0">{{.ChangedAt.Format "2006-01-02 15:04"}}</span>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">{{.Status}}</span>
+    {{if .Notes}}<span class="text-gray-600">{{.Notes}}</span>{{end}}
+  </div>
+  {{else}}
+  <p class="text-sm text-gray-400">No status history.</p>
+  {{end}}
+</div>
+{{end}}

@@ -2,10 +2,12 @@
 package dashboard_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/graditya/prospector/internal/config"
@@ -34,4 +36,47 @@ func TestRootReturns200(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestAppsListRoute(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Applications")
+}
+
+func TestAppDetailRoute(t *testing.T) {
+	srv := newTestServer(t)
+	store := srv.Store()
+	id, err := store.UpsertApplication(db.Application{
+		Company: "Stripe", Role: "Engineer",
+		AppliedDate: "2025-01-01", FolderPath: "stripe/engineer/2025-01-01",
+	})
+	require.NoError(t, err)
+	store.AddStatusHistory(id, "applied", "")
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/apps/%d", id), nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Stripe")
+}
+
+func TestAppStatusUpdate(t *testing.T) {
+	srv := newTestServer(t)
+	store := srv.Store()
+	id, _ := store.UpsertApplication(db.Application{
+		Company: "X", Role: "Y", AppliedDate: "2025-01-01", FolderPath: "x/y/2025-01-01",
+	})
+	store.AddStatusHistory(id, "applied", "")
+
+	form := strings.NewReader("status=interview&notes=phone+screen")
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/apps/%d/status", id), form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "interview")
 }

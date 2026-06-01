@@ -1,4 +1,29 @@
 {{define "content"}}
 <h1 class="text-2xl font-bold mb-6">Applications</h1>
-<p class="text-gray-500">No applications yet.</p>
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+      <tr>
+        <th class="text-left px-4 py-3">Company</th>
+        <th class="text-left px-4 py-3">Role</th>
+        <th class="text-left px-4 py-3">Applied</th>
+        <th class="text-left px-4 py-3">Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {{range .Apps}}
+      <tr class="hover:bg-gray-50 cursor-pointer" onclick="location.href='/apps/{{.ID}}'">
+        <td class="px-4 py-3 font-medium">{{.Company}}</td>
+        <td class="px-4 py-3 text-gray-600">{{.Role}}</td>
+        <td class="px-4 py-3 text-gray-500">{{.AppliedDate}}</td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-0.5 rounded text-xs font-semibold {{.BadgeClass}}">{{.CurrentStatus}}</span>
+        </td>
+      </tr>
+      {{else}}
+      <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No applications yet. Use <code>/apply</code> in Claude Code to create one.</td></tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
 {{end}}
