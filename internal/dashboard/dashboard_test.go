@@ -2,7 +2,9 @@
 package dashboard_test
 
 import (
+	"bytes"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -156,4 +158,73 @@ func TestStatsSyncRoute(t *testing.T) {
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "devops")
+}
+
+func TestThemesListRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { font-family: serif; }"), 0644)
+
+	req := httptest.NewRequest(http.MethodGet, "/themes", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "minimal")
+}
+
+func TestThemePreviewRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0644)
+	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello World"))
+
+	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.md", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Hello World")
+}
+
+func TestThemeUploadRoute(t *testing.T) {
+	srv := newTestServer(t)
+
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	fw, _ := mw.CreateFormFile("theme", "custom.css")
+	fw.Write([]byte("body { background: blue; }"))
+	mw.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/themes/upload", &buf)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusSeeOther, w.Code)
+}
+
+func TestExportRoute(t *testing.T) {
+	// mock Gotenberg
+	gotenberg := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Write([]byte("%PDF-fake"))
+	}))
+	defer gotenberg.Close()
+
+	root := t.TempDir()
+	store, _ := db.Open(filepath.Join(root, "test.db"))
+	defer store.Close()
+	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
+		os.MkdirAll(filepath.Join(root, d), 0755)
+	}
+	cfg := config.Config{GotenbergURL: gotenberg.URL}
+	srv := dashboard.NewServer(root, store, cfg)
+
+	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello"))
+
+	form := strings.NewReader("file_path=cv%2Fcv-test.md&theme=")
+	req := httptest.NewRequest(http.MethodPost, "/export", form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/pdf", w.Header().Get("Content-Type"))
 }
