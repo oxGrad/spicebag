@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/graditya/prospector/internal/db"
 	"github.com/graditya/prospector/internal/fs"
 	prospectormcp "github.com/graditya/prospector/internal/mcp"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -65,6 +66,37 @@ func TestListThemesTool(t *testing.T) {
 	result, err := srv.CallTool(context.Background(), "list_themes", map[string]any{})
 	require.NoError(t, err)
 	assert.Contains(t, result, "minimal")
+}
+
+func TestGetExperienceStatsTool(t *testing.T) {
+	_, srv := setup(t)
+
+	// seed via the server's own store — avoids opening a second SQLite connection
+	entries := []db.ExperienceEntry{
+		{RoleType: "backend", Company: "Acme", StartDate: "2020-01-01", EndDate: "2022-01-01", SyncedFrom: "cv.md"},
+	}
+	require.NoError(t, srv.Store().UpsertExperience(entries))
+
+	result, err := srv.CallTool(context.Background(), "get_experience_stats", map[string]any{})
+	require.NoError(t, err)
+	assert.Contains(t, result, "backend")
+}
+
+func TestCreateApplicationTool(t *testing.T) {
+	root, srv := setup(t)
+	_, err := srv.CallTool(context.Background(), "create_application", map[string]any{
+		"company":              "Stripe",
+		"role":                 "Backend Engineer",
+		"date":                 "2025-06-01",
+		"cv_content":           "# CV",
+		"cover_letter_content": "Dear Stripe",
+		"job_post_content":     "We are hiring",
+		"base_cv_used":         "cv-backend-2025-01-01.md",
+	})
+	require.NoError(t, err)
+
+	_, statErr := os.Stat(filepath.Join(root, "applications", "stripe", "backend-engineer", "2025-06-01", "cv.md"))
+	require.NoError(t, statErr)
 }
 
 // helper to avoid importing mcp package in every test
