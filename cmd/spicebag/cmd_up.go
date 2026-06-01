@@ -1,4 +1,4 @@
-// cmd/prospector/cmd_up.go
+// cmd/spicebag/cmd_up.go
 package main
 
 import (
@@ -15,9 +15,9 @@ func newUpCmd() *cobra.Command {
 		Use:   "up",
 		Short: "Start Gotenberg via docker compose",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			composePath := filepath.Join(prospectorRoot(), "docker-compose.yml")
+			composePath := filepath.Join(spicebagRoot(), "docker-compose.yml")
 			if _, err := os.Stat(composePath); os.IsNotExist(err) {
-				return fmt.Errorf("docker-compose.yml not found at %s — run prospector init first", composePath)
+				return fmt.Errorf("docker-compose.yml not found at %s — run spicebag init first", composePath)
 			}
 			c := exec.Command("docker", "compose", "-f", composePath, "up", "-d")
 			c.Stdout = os.Stdout

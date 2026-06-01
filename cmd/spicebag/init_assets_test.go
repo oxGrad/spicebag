@@ -1,4 +1,4 @@
-// cmd/prospector/init_assets_test.go
+// cmd/spicebag/init_assets_test.go
 package main
 
 import (

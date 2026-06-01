@@ -1,52 +1,56 @@
-# Prospector
+# 🌶️ Spice Bag
 
-CV, cover letter, and job application manager for Claude Code.
+**Season Every Application Perfectly**
 
-Manage versioned CVs and cover letters in Markdown, export to PDF, track job applications, and let Claude Code customize your CV and write cover letters — all from your terminal.
+Your CV is like a great recipe. You have all the right ingredients — experience, skills, achievements — but without the right seasoning, it might not stand out.
+
+Spice Bag is an AI-powered tool that helps you tailor your CV and cover letter for every job application. Like a chef selecting the perfect spices for a dish, it analyzes each job posting and helps you emphasize the right experiences, skills, and achievements to make your application stand out.
+
+No more generic CVs. Just perfectly seasoned applications for every role you apply to.
 
 ## What it does
 
-- Stores base CV variants and cover letters as Markdown in `~/.config/prospector/`
-- Extracts experience stats (years per role type) from CV frontmatter into SQLite
-- Tracks job applications with status history
-- Exports PDFs via Gotenberg (Docker container)
-- Adds three slash commands to Claude Code: `/customize-cv`, `/write-cover-letter`, `/apply`
-- Web dashboard at `http://localhost:8080`
+- **Your Spice Bag** — stores base CV variants and cover letters as Markdown in `~/.config/spicebag/`
+- **Flavor extraction** — pulls experience stats (years per role type) from CV frontmatter into SQLite
+- **Application tracking** — tracks every job application with full status history
+- **PDF export** — exports to print-quality PDF via Gotenberg (no browser print dialogs)
+- **Three slash commands** — `/customize-cv`, `/write-cover-letter`, `/apply` directly in Claude Code
+- **Dashboard** — browse and manage everything at `http://localhost:8080`
 
 ## Prerequisites
 
 - Go 1.22+
-- Docker
+- Docker (for Gotenberg PDF export)
 - Claude Code
 
 ## Installation
 
-### 1. Install the binary
+### 1. Add your spices to the bag
 
 ```bash
-go install github.com/graditya/prospector/cmd/prospector@latest
+go install github.com/graditya/prospector/cmd/spicebag@latest
 ```
 
-### 2. Run first-time setup
+### 2. Season your workspace
 
 ```bash
-prospector init
+spicebag init
 ```
 
-This creates `~/.config/prospector/`, registers the MCP server with Claude Code, installs default themes to `~/.config/prospector/themes/`, and installs slash commands to `~/.claude/commands/prospector/`.
+This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes to `~/.config/spicebag/themes/`, and installs slash commands to `~/.claude/commands/spicebag/`.
 
-### 3. Start Gotenberg (PDF export)
+### 3. Fire up the kitchen
 
 ```bash
-prospector up
+spicebag up      # starts Gotenberg (PDF export service) via docker compose
 ```
 
-### 4. Start the dashboard
+### 4. Open the dashboard
 
 ```bash
-prospector serve        # foreground
-prospector serve -d     # background (logs to ~/.config/prospector/prospector.log)
-prospector stop         # stop background server
+spicebag serve        # foreground
+spicebag serve -d     # background (logs to ~/.config/spicebag/spicebag.log)
+spicebag stop         # stop background server
 ```
 
 Open `http://localhost:8080` in your browser.
@@ -57,21 +61,33 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 
 | Command | What it does |
 |---|---|
-| `/customize-cv <job post or role>` | Tailors the most relevant base CV to the role and saves a new versioned file |
-| `/write-cover-letter <job post>` | Writes a cover letter and saves it to the library |
-| `/apply <job post>` | Full application: tailored CV + cover letter + saved job post |
+| `/customize-cv <job post or role>` | Select the recipe — tailor your most relevant base CV for the role and save a new version |
+| `/write-cover-letter <job post>` | A fresh cover letter that explains why you're the perfect spice blend for their team |
+| `/apply <job post>` | Full application in one pass: tailored CV + cover letter + saved job post |
+
+## The seasoning process
+
+**Step 1 — Your Spice Bag:** Upload your CV — your full ingredient list.
+
+**Step 2 — Select the Recipe:** Paste the job description. Spice Bag understands what flavor profile they're looking for.
+
+**Step 3 — Let's Season:** Claude analyzes the recipe and selects the perfect spice blend from your experience for this specific role.
+
+**Step 4 — Taste Test:** Review your tailored CV and cover letter in the dashboard.
+
+**Step 5 — Serve it Up:** Export to PDF and apply — perfectly seasoned.
 
 ## CLI reference
 
 | Command | Description |
 |---|---|
-| `prospector init` | First-time setup: config dir, MCP registration, themes, slash commands |
-| `prospector up` | Start Gotenberg via docker compose |
-| `prospector serve` | Start the dashboard (foreground) |
-| `prospector serve -d` | Start the dashboard (background) |
-| `prospector stop` | Stop the background dashboard server |
-| `prospector sync` | Sync experience stats from CV frontmatter to SQLite |
-| `prospector mcp` | Run the MCP server (invoked automatically by Claude Code) |
+| `spicebag init` | First-time setup: config dir, MCP registration, themes, slash commands |
+| `spicebag up` | Start Gotenberg via docker compose |
+| `spicebag serve` | Start the dashboard (foreground) |
+| `spicebag serve -d` | Start the dashboard (background) |
+| `spicebag stop` | Stop the background dashboard server |
+| `spicebag sync` | Sync experience stats from CV frontmatter to SQLite |
+| `spicebag mcp` | Run the MCP server (invoked automatically by Claude Code) |
 
 ## MCP tools
 
@@ -79,9 +95,9 @@ These tools are available to Claude Code via the MCP server:
 
 `list_cvs`, `read_cv`, `write_cv`, `list_cover_letters`, `read_cover_letter`, `write_cover_letter`, `get_experience_stats`, `create_application`, `list_applications`, `export_pdf`
 
-## CV frontmatter
+## CV frontmatter (for experience stats)
 
-Add an `experience` block to your CV Markdown files. Run `prospector sync` after editing to update the SQLite database.
+Add an `experience` block to your CV Markdown files — this is your spice collection. Run `spicebag sync` after editing to update the database.
 
 ```yaml
 ---
@@ -95,7 +111,6 @@ experience:
     start: "2023-07-01"
     end: ""
 ---
-
 # Your CV content here
 ```
 
@@ -107,37 +122,38 @@ Open `http://localhost:8080` to:
 
 - Browse and export CVs and cover letters with CSS themes
 - Track application status (applied → interview → offer / rejected)
-- View experience stats and application analytics
+- View experience stats
 - Upload custom CSS themes
 
 ## Themes
 
-CSS files in `~/.config/prospector/themes/` control how CVs and cover letters render in the dashboard and PDF export.
+CSS files in `~/.config/spicebag/themes/` control how CVs and cover letters render in the dashboard and PDF export. Think of them as your plating style.
 
 Two themes are installed by default:
+
 - `minimal` — serif font, clean layout
 - `modern` — sans-serif, blue accents
 
-To add more: upload a `.css` file via the dashboard, or drop it directly into `~/.config/prospector/themes/`.
+To add more: upload a `.css` file via the dashboard, or drop it directly into `~/.config/spicebag/themes/`.
 
 ## Config directory layout
 
 ```
-~/.config/prospector/
-  config.toml          dashboard port, Gotenberg URL
-  prospector.db        SQLite: experience stats + application tracking
-  cv/                  base CV markdown files
-  cover-letters/       cover letter templates
-  themes/              CSS themes
-  applications/        one folder per job application
-  prospector.log       background dashboard log (when using serve -d)
+~/.config/spicebag/
+  config.toml       dashboard port, Gotenberg URL
+  spicebag.db       SQLite: experience stats + application tracking
+  cv/               base CV markdown files (your spice bag)
+  cover-letters/    cover letter templates
+  themes/           CSS themes
+  applications/     one folder per job application
+  spicebag.log      background dashboard log (when using serve -d)
 ```
 
 ## Uninstall
 
 ```bash
-rm $(which prospector)
-rm -rf ~/.config/prospector
-rm -rf ~/.claude/commands/prospector
-# Remove the "prospector" entry from ~/.claude/mcp.json under mcpServers
+rm $(which spicebag)
+rm -rf ~/.config/spicebag
+rm -rf ~/.claude/commands/spicebag
+# Remove the "spicebag" entry from ~/.claude/mcp.json under mcpServers
 ```

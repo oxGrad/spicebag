@@ -1,0 +1,10 @@
+mode: set
+github.com/graditya/prospector/internal/config/config.go:14.24,19.2 1 1
+github.com/graditya/prospector/internal/config/config.go:21.40,24.24 3 1
+github.com/graditya/prospector/internal/config/config.go:24.24,26.3 1 1
+github.com/graditya/prospector/internal/config/config.go:27.2,27.16 1 1
+github.com/graditya/prospector/internal/config/config.go:27.16,29.3 1 0
+github.com/graditya/prospector/internal/config/config.go:30.2,31.17 2 1
+github.com/graditya/prospector/internal/config/config.go:34.42,36.16 2 1
+github.com/graditya/prospector/internal/config/config.go:36.16,38.3 1 0
+github.com/graditya/prospector/internal/config/config.go:39.2,40.39 2 1

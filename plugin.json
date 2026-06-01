@@ -1,10 +1,10 @@
 {
-  "name": "prospector",
+  "name": "spicebag",
   "version": "1.0.0",
-  "description": "Spice Bag — CV, cover letter, and job application manager for Claude Code",
+  "description": "Spice Bag — Season every application perfectly. CV, cover letter, and job application manager for Claude Code.",
   "author": "dev@graditya.com",
   "mcp": {
-    "command": "prospector",
+    "command": "spicebag",
     "args": ["mcp"]
   },
   "skills": [

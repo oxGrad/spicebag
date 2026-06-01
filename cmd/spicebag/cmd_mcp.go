@@ -1,4 +1,4 @@
-// cmd/prospector/cmd_mcp.go
+// cmd/spicebag/cmd_mcp.go
 package main
 
 import (
@@ -15,14 +15,14 @@ func newMCPCmd() *cobra.Command {
 		Use:   "mcp",
 		Short: "Start MCP server (called automatically by Claude Code)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root := prospectorRoot()
+			root := spicebagRoot()
 			cfgPath := filepath.Join(root, "config.toml")
 			cfg, err := config.Load(cfgPath)
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
 
-			srv, err := prospectormcp.NewServer(root, filepath.Join(root, "prospector.db"), cfg.GotenbergURL)
+			srv, err := prospectormcp.NewServer(root, filepath.Join(root, "spicebag.db"), cfg.GotenbergURL)
 			if err != nil {
 				return fmt.Errorf("init MCP server: %w", err)
 			}

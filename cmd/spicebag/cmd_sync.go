@@ -1,4 +1,4 @@
-// cmd/prospector/cmd_sync.go
+// cmd/spicebag/cmd_sync.go
 package main
 
 import (
@@ -16,8 +16,8 @@ func newSyncCmd() *cobra.Command {
 		Use:   "sync",
 		Short: "Re-parse all base CVs and refresh experience data in SQLite",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root := prospectorRoot()
-			store, err := db.Open(filepath.Join(root, "prospector.db"))
+			root := spicebagRoot()
+			store, err := db.Open(filepath.Join(root, "spicebag.db"))
 			if err != nil {
 				return err
 			}

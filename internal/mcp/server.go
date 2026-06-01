@@ -28,7 +28,7 @@ func NewServer(root, dbPath, gotenbergURL string) (*Server, error) {
 		root:   root,
 		store:  store,
 		gotURL: gotenbergURL,
-		mcpSrv: server.NewMCPServer("prospector", "1.0.0"),
+		mcpSrv: server.NewMCPServer("spicebag", "1.0.0"),
 	}
 
 	s.registerCVTools()

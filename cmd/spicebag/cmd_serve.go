@@ -1,4 +1,4 @@
-// cmd/prospector/cmd_serve.go
+// cmd/spicebag/cmd_serve.go
 package main
 
 import (
@@ -23,9 +23,9 @@ func newServeCmd() *cobra.Command {
 		Use:   "serve",
 		Short: "Start the web dashboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root := prospectorRoot()
-			pidPath := filepath.Join(root, "prospector.pid")
-			logPath := filepath.Join(root, "prospector.log")
+			root := spicebagRoot()
+			pidPath := filepath.Join(root, "spicebag.pid")
+			logPath := filepath.Join(root, "spicebag.log")
 
 			if daemon {
 				logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -49,7 +49,7 @@ func newServeCmd() *cobra.Command {
 
 				fmt.Printf("Dashboard started in background (PID %d)\n", child.Process.Pid)
 				fmt.Printf("Log:  %s\n", logPath)
-				fmt.Printf("Stop: prospector stop\n")
+				fmt.Printf("Stop: spicebag stop\n")
 				return nil
 			}
 
@@ -60,7 +60,7 @@ func newServeCmd() *cobra.Command {
 				return fmt.Errorf("load config: %w", err)
 			}
 
-			store, err := db.Open(filepath.Join(root, "prospector.db"))
+			store, err := db.Open(filepath.Join(root, "spicebag.db"))
 			if err != nil {
 				return fmt.Errorf("open db: %w", err)
 			}
@@ -81,10 +81,10 @@ func newStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the background dashboard server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			pidPath := filepath.Join(prospectorRoot(), "prospector.pid")
+			pidPath := filepath.Join(spicebagRoot(), "spicebag.pid")
 			data, err := os.ReadFile(pidPath)
 			if os.IsNotExist(err) {
-				return fmt.Errorf("prospector is not running (no PID file at %s)", pidPath)
+				return fmt.Errorf("spicebag is not running (no PID file at %s)", pidPath)
 			}
 			if err != nil {
 				return err
@@ -104,7 +104,7 @@ func newStopCmd() *cobra.Command {
 			}
 
 			os.Remove(pidPath)
-			fmt.Printf("Stopped prospector dashboard (PID %d)\n", pid)
+			fmt.Printf("Stopped spicebag dashboard (PID %d)\n", pid)
 			return nil
 		},
 	}

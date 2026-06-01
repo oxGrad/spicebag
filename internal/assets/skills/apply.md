@@ -30,7 +30,7 @@ Required: job post content (file reference, URL, or free-text). Optional: compan
    - `job_post_content`: the full job post text
    - `base_cv_used`: filename of the base CV selected in step 4
 8. Report the application folder path created
-9. Remind the user to open the dashboard (`prospector serve`) to track status
+9. Remind the user to open the dashboard (`spicebag serve`) to track status
 
 ## Rules
 

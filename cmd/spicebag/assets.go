@@ -1,4 +1,4 @@
-// cmd/prospector/assets.go
+// cmd/spicebag/assets.go
 package main
 
 import "github.com/graditya/prospector/internal/assets"

@@ -1,4 +1,4 @@
-// cmd/prospector/cmd_init.go
+// cmd/spicebag/cmd_init.go
 package main
 
 import (
@@ -17,9 +17,9 @@ import (
 func newInitCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "init",
-		Short: "Set up ~/.config/prospector and register MCP server with Claude Code",
+		Short: "Set up ~/.config/spicebag and register MCP server with Claude Code",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root := prospectorRoot()
+			root := spicebagRoot()
 
 			dirs := []string{"cv", "cover-letters", "themes", "applications"}
 			for _, d := range dirs {
@@ -36,7 +36,7 @@ func newInitCmd() *cobra.Command {
 				fmt.Println("Created", cfgPath)
 			}
 
-			dbPath := filepath.Join(root, "prospector.db")
+			dbPath := filepath.Join(root, "spicebag.db")
 			store, err := db.Open(dbPath)
 			if err != nil {
 				return err
@@ -51,16 +51,16 @@ func newInitCmd() *cobra.Command {
 				fmt.Println("Extracted default themes to", filepath.Join(root, "themes"))
 			}
 
-			// install slash command skills to ~/.claude/commands/prospector/
+			// install slash command skills to ~/.claude/commands/spicebag/
 			home, _ := os.UserHomeDir()
-			commandsDir := filepath.Join(home, ".claude", "commands", "prospector")
+			commandsDir := filepath.Join(home, ".claude", "commands", "spicebag")
 			if err := extractEmbedDir(skillsFS, "skills", commandsDir); err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: could not install skills: %v\n", err)
 			} else {
 				fmt.Println("Installed skills to", commandsDir)
 			}
 
-			// copy docker-compose.yml from next to binary to ~/.config/prospector/
+			// copy docker-compose.yml from next to binary to ~/.config/spicebag/
 			composeDest := filepath.Join(root, "docker-compose.yml")
 			if _, err := os.Stat(composeDest); os.IsNotExist(err) {
 				src := filepath.Join(execDir(), "docker-compose.yml")
@@ -85,16 +85,16 @@ func newInitCmd() *cobra.Command {
 			}
 
 			fmt.Println("\nNext steps:")
-			fmt.Println("  prospector up       # start Gotenberg")
-			fmt.Println("  prospector serve    # start dashboard")
+			fmt.Println("  spicebag up       # start Gotenberg")
+			fmt.Println("  spicebag serve    # start dashboard")
 			return nil
 		},
 	}
 }
 
-func prospectorRoot() string {
+func spicebagRoot() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "prospector")
+	return filepath.Join(home, ".config", "spicebag")
 }
 
 func execDir() string {
@@ -127,8 +127,8 @@ func registerMCPServer() error {
 	if servers == nil {
 		servers = map[string]any{}
 	}
-	servers["prospector"] = map[string]any{
-		"command": "prospector",
+	servers["spicebag"] = map[string]any{
+		"command": "spicebag",
 		"args":    []string{"mcp"},
 	}
 	mcpCfg["mcpServers"] = servers
@@ -146,7 +146,7 @@ func registerMCPServer() error {
 func printMCPConfig() {
 	fmt.Println(`{
   "mcpServers": {
-    "prospector": { "command": "prospector", "args": ["mcp"] }
+    "spicebag": { "command": "spicebag", "args": ["mcp"] }
   }
 }`)
 }
