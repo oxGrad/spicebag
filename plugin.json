@@ -8,8 +8,8 @@
     "args": ["mcp"]
   },
   "skills": [
-    "skills/customize-cv.md",
-    "skills/write-cover-letter.md",
-    "skills/apply.md"
+    "internal/assets/skills/customize-cv.md",
+    "internal/assets/skills/write-cover-letter.md",
+    "internal/assets/skills/apply.md"
   ]
 }
