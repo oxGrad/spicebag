@@ -9,8 +9,9 @@ import (
 
 func main() {
 	root := &cobra.Command{
-		Use:   "spicebag",
-		Short: "Season every application perfectly — CV and cover letter manager for Claude Code",
+		Use:     "spicebag",
+		Short:   "Season every application perfectly — CV and cover letter manager for Claude Code",
+		Version: Version,
 	}
 
 	root.AddCommand(
