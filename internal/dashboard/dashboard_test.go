@@ -275,3 +275,53 @@ func TestGotenbergStatusStopped(t *testing.T) {
 	assert.Contains(t, w.Body.String(), `disabled`)
 	assert.Contains(t, w.Body.String(), "Start Gotenberg to export PDF")
 }
+
+func TestGotenbergStart(t *testing.T) {
+	mock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health" {
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer mock.Close()
+
+	root := t.TempDir()
+	store, err := db.Open(filepath.Join(root, "test.db"))
+	require.NoError(t, err)
+	defer store.Close()
+	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
+		os.MkdirAll(filepath.Join(root, d), 0o755)
+	}
+	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
+	srv.SetComposeRunner(func(args ...string) error { return nil }) // no-op: skip docker
+
+	form := strings.NewReader("file_path=cv%2Ftest.md&theme=minimal")
+	req := httptest.NewRequest(http.MethodPost, "/gotenberg/start", form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Gotenberg running")
+	assert.NotContains(t, w.Body.String(), "disabled")
+}
+
+func TestGotenbergStop(t *testing.T) {
+	root := t.TempDir()
+	store, err := db.Open(filepath.Join(root, "test.db"))
+	require.NoError(t, err)
+	defer store.Close()
+	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
+		os.MkdirAll(filepath.Join(root, d), 0o755)
+	}
+	// nothing listening on 19999 → healthcheck returns false → "stopped"
+	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
+	srv.SetComposeRunner(func(args ...string) error { return nil })
+
+	form := strings.NewReader("file_path=cover-letters%2Fcl.md&theme=")
+	req := httptest.NewRequest(http.MethodPost, "/gotenberg/stop", form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
+	assert.Contains(t, w.Body.String(), "disabled")
+}
