@@ -129,3 +129,31 @@ func TestCLViewRoute(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Hiring Manager")
 }
+
+func TestStatsRoute(t *testing.T) {
+	srv := newTestServer(t)
+	store := srv.Store()
+	require.NoError(t, store.UpsertExperience([]db.ExperienceEntry{
+		{RoleType: "backend", Company: "Acme", StartDate: "2020-01-01", EndDate: "2022-01-01", SyncedFrom: "cv.md"},
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/stats", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "backend")
+}
+
+func TestStatsSyncRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	// write a CV with frontmatter so sync has something to parse
+	cvContent := "---\nexperience:\n  - role_type: devops\n    company: FooCo\n    start: \"2021-01-01\"\n    end: \"2023-01-01\"\n---\n# CV\n"
+	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.md", cvContent))
+
+	req := httptest.NewRequest(http.MethodPost, "/stats/sync", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "devops")
+}

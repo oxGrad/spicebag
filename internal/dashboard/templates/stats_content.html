@@ -1,0 +1,32 @@
+{{define "stats_content"}}
+<div id="stats-content">
+  <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+        <tr>
+          <th class="text-left px-4 py-3">Role Type</th>
+          <th class="text-right px-4 py-3">Years</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{range $role, $years := .ByRole}}
+        <tr>
+          <td class="px-4 py-3 font-medium">{{$role}}</td>
+          <td class="px-4 py-3 text-right text-gray-600">{{printf "%.1f" $years}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" class="px-4 py-8 text-center text-gray-400">No experience data. Run sync after adding CVs with frontmatter.</td></tr>
+        {{end}}
+      </tbody>
+      {{if .ByRole}}
+      <tfoot class="bg-gray-50 font-semibold">
+        <tr>
+          <td class="px-4 py-3">Total</td>
+          <td class="px-4 py-3 text-right">{{printf "%.1f" .Total}}</td>
+        </tr>
+      </tfoot>
+      {{end}}
+    </table>
+  </div>
+</div>
+{{end}}
