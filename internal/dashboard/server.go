@@ -18,15 +18,17 @@ var templateFS embed.FS
 
 // Server holds all dependencies and the HTTP mux.
 type Server struct {
-	root  string
-	store *db.Store
-	cfg   config.Config
-	mux   *http.ServeMux
+	root       string
+	store      *db.Store
+	cfg        config.Config
+	mux        *http.ServeMux
+	runCompose func(args ...string) error
 }
 
 // NewServer creates a Server and registers all routes.
 func NewServer(root string, store *db.Store, cfg config.Config) *Server {
 	s := &Server{root: root, store: store, cfg: cfg, mux: http.NewServeMux()}
+	s.runCompose = s.defaultRunCompose
 	s.routes()
 	return s
 }
@@ -67,6 +69,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /themes", s.handleThemesList)
 	s.mux.HandleFunc("GET /themes/{name}/preview", s.handleThemePreview)
 	s.mux.HandleFunc("POST /themes/upload", s.handleThemeUpload)
+
+	s.mux.HandleFunc("GET /gotenberg/status", s.handleGotenbergStatus)
+	s.mux.HandleFunc("POST /gotenberg/start", s.handleGotenbergStart)
+	s.mux.HandleFunc("POST /gotenberg/stop", s.handleGotenbergStop)
 }
 
 // render parses layout.html + the named page template and executes "layout".
