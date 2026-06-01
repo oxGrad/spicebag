@@ -105,3 +105,27 @@ func TestCVViewRoute(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Backend CV")
 }
+
+func TestCLListRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager"))
+
+	req := httptest.NewRequest(http.MethodGet, "/cl", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.md")
+}
+
+func TestCLViewRoute(t *testing.T) {
+	srv := newTestServer(t)
+	root := srv.Root()
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager\n\nI am excited..."))
+
+	req := httptest.NewRequest(http.MethodGet, "/cl/cl-general-2025-01-01.md", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Hiring Manager")
+}

@@ -1,0 +1,28 @@
+{{define "content"}}
+<div class="mb-4">
+  <a href="/cl" class="text-blue-600 hover:underline text-sm">← Cover Letters</a>
+</div>
+<div class="flex items-start justify-between mb-4 gap-4">
+  <h1 class="text-xl font-bold">{{.Name}}</h1>
+  <div class="flex gap-2 shrink-0">
+    <form method="get" class="flex gap-2 items-center">
+      <select name="theme" class="border rounded px-2 py-1.5 text-sm bg-white">
+        <option value="">No theme</option>
+        {{range .Themes}}
+        <option value="{{.}}" {{if eq . $.SelectedTheme}}selected{{end}}>{{.}}</option>
+        {{end}}
+      </select>
+      <button type="submit" class="border rounded px-3 py-1.5 text-sm bg-white hover:bg-gray-50">Preview</button>
+    </form>
+    <form method="post" action="/export">
+      <input type="hidden" name="file_path" value="cover-letters/{{.Name}}">
+      <input type="hidden" name="theme" value="{{.SelectedTheme}}">
+      <button type="submit" class="bg-blue-600 text-white rounded px-3 py-1.5 text-sm hover:bg-blue-700">Export PDF</button>
+    </form>
+  </div>
+</div>
+{{.ThemeStyle}}
+<article class="bg-white rounded-lg shadow p-8 prose prose-sm max-w-none" id="preview">
+  {{.Content}}
+</article>
+{{end}}
