@@ -67,7 +67,6 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 |---|---|
 | `prospector init` | First-time setup: config dir, MCP registration, themes, slash commands |
 | `prospector up` | Start Gotenberg via docker compose |
-| `prospector stop` | Stop Gotenberg |
 | `prospector serve` | Start the dashboard (foreground) |
 | `prospector serve -d` | Start the dashboard (background) |
 | `prospector stop` | Stop the background dashboard server |
