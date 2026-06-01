@@ -1,17 +1,18 @@
 ---
 name: apply
-description: Create a complete job application — tailored CV + cover letter + saved job post — from a job post URL or file
+description: Create a complete job application — tailored CV + cover letter + saved job post — from a job post URL, file, or pasted text
 ---
 
 Create a complete job application for the job post provided in $ARGUMENTS.
 
-Required: job post content (file reference or URL). Optional: company name and role title if not clear from the post.
+Required: job post content (file reference, URL, or free-text). Optional: company name and role title if not clear from the post.
 
 ## Process
 
 1. Read the job post from $ARGUMENTS:
    - If it starts with `@` it is a file reference — read that file
    - If it starts with `http` it is a URL — fetch the content
+   - Otherwise treat it as a free-text job description
 2. Extract from the job post: company name, role title, and today's date (YYYY-MM-DD)
    - If company or role cannot be reliably determined, ask the user before continuing
 3. Call `list_cvs` to see available base CVs
