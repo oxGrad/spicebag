@@ -115,3 +115,45 @@ func TestExperienceStats(t *testing.T) {
 	assert.InDelta(t, 2.0, stats.ByRole["devops"], 0.1)
 	assert.InDelta(t, 5.0, stats.Total, 0.1)
 }
+
+func TestListApplicationsWithStatus(t *testing.T) {
+	store := openTestStore(t)
+
+	app := db.Application{
+		Company: "Stripe", Role: "Engineer",
+		AppliedDate: "2025-01-01", FolderPath: "stripe/engineer/2025-01-01",
+	}
+	id, err := store.UpsertApplication(app)
+	require.NoError(t, err)
+
+	require.NoError(t, store.AddStatusHistory(id, "applied", ""))
+	require.NoError(t, store.AddStatusHistory(id, "interview", "phone screen"))
+
+	apps, err := store.ListApplicationsWithStatus()
+	require.NoError(t, err)
+	require.Len(t, apps, 1)
+	assert.Equal(t, "interview", apps[0].CurrentStatus)
+	assert.Equal(t, "Stripe", apps[0].Company)
+}
+
+func TestGetApplicationByID(t *testing.T) {
+	store := openTestStore(t)
+
+	app := db.Application{
+		Company: "Acme", Role: "Dev",
+		AppliedDate: "2025-06-01", FolderPath: "acme/dev/2025-06-01",
+	}
+	id, err := store.UpsertApplication(app)
+	require.NoError(t, err)
+
+	got, err := store.GetApplicationByID(id)
+	require.NoError(t, err)
+	assert.Equal(t, id, got.ID)
+	assert.Equal(t, "Acme", got.Company)
+}
+
+func TestGetApplicationByIDNotFound(t *testing.T) {
+	store := openTestStore(t)
+	_, err := store.GetApplicationByID(9999)
+	assert.Error(t, err)
+}

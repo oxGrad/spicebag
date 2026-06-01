@@ -84,6 +84,54 @@ func (s *Store) GetStatusHistory(applicationID int64) ([]StatusHistoryEntry, err
 	return history, rows.Err()
 }
 
+// ApplicationWithStatus is an Application plus its most recent status.
+type ApplicationWithStatus struct {
+	Application
+	CurrentStatus string
+}
+
+// ListApplicationsWithStatus returns all applications with their latest status.
+func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
+	rows, err := s.db.Query(`
+		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path,
+		       COALESCE(
+		         (SELECT status FROM application_status_history
+		          WHERE application_id = a.id
+		          ORDER BY changed_at DESC, id DESC LIMIT 1),
+		         'unknown'
+		       ) AS current_status
+		FROM applications a
+		ORDER BY a.applied_date DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var apps []ApplicationWithStatus
+	for rows.Next() {
+		var a ApplicationWithStatus
+		if err := rows.Scan(
+			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath,
+			&a.CurrentStatus,
+		); err != nil {
+			return nil, err
+		}
+		apps = append(apps, a)
+	}
+	return apps, rows.Err()
+}
+
+// GetApplicationByID returns a single application by its primary key.
+func (s *Store) GetApplicationByID(id int64) (Application, error) {
+	var a Application
+	err := s.db.QueryRow(
+		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path FROM applications WHERE id = ?`,
+		id,
+	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath)
+	return a, err
+}
+
 func (s *Store) GetExperienceStats() (ExperienceStats, error) {
 	entries, err := s.ListExperience()
 	if err != nil {
