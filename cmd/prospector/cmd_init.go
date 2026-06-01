@@ -162,7 +162,10 @@ func extractEmbedDir(fsys embed.FS, src, dst string) error {
 		if d.IsDir() {
 			return nil
 		}
-		rel, _ := filepath.Rel(src, path)
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
 		destPath := filepath.Join(dst, rel)
 		if _, err := os.Stat(destPath); err == nil {
 			return nil // skip existing files
