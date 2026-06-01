@@ -1,4 +1,4 @@
-// cmd/spicebag/cmd_serve.go
+// cmd/spicebag/cmd_start.go
 package main
 
 import (
@@ -16,11 +16,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newServeCmd() *cobra.Command {
+func newStartCmd() *cobra.Command {
 	var daemon bool
 
 	cmd := &cobra.Command{
-		Use:   "serve",
+		Use:   "start",
 		Short: "Start the web dashboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := spicebagRoot()
@@ -33,7 +33,7 @@ func newServeCmd() *cobra.Command {
 					return fmt.Errorf("open log: %w", err)
 				}
 
-				child := exec.Command(os.Args[0], "serve")
+				child := exec.Command(os.Args[0], "start")
 				child.Stdout = logFile
 				child.Stderr = logFile
 				child.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // detach from terminal

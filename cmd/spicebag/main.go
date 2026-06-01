@@ -18,7 +18,7 @@ func main() {
 		newInitCmd(),
 		newMCPCmd(),
 		newSyncCmd(),
-		newServeCmd(),
+		newStartCmd(),
 		newStopCmd(),
 	)
 

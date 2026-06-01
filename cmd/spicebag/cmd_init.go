@@ -86,7 +86,7 @@ func newInitCmd() *cobra.Command {
 
 			fmt.Println("\nNext steps:")
 			fmt.Println("  spicebag up       # start Gotenberg")
-			fmt.Println("  spicebag serve    # start dashboard")
+			fmt.Println("  spicebag start    # start dashboard")
 			return nil
 		},
 	}

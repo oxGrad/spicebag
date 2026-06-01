@@ -48,8 +48,8 @@ This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, i
 ### Open the dashboard
 
 ```bash
-spicebag serve        # foreground
-spicebag serve -d     # background (logs to ~/.config/spicebag/spicebag.log)
+spicebag start        # foreground
+spicebag start -d     # background (logs to ~/.config/spicebag/spicebag.log)
 spicebag stop         # stop background server
 ```
 
@@ -100,8 +100,8 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 | Command | Description |
 |---|---|
 | `spicebag init` | First-time setup: config dir, MCP registration, themes, slash commands |
-| `spicebag serve` | Start the dashboard (foreground) |
-| `spicebag serve -d` | Start the dashboard (background) |
+| `spicebag start` | Start the dashboard (foreground) |
+| `spicebag start -d` | Start the dashboard (background) |
 | `spicebag stop` | Stop the background dashboard server |
 | `spicebag sync` | Sync experience stats from CV frontmatter to SQLite |
 | `spicebag mcp` | Run the MCP server (invoked automatically by Claude Code) |
@@ -163,7 +163,7 @@ To add more: upload a `.css` file via the dashboard, or drop it directly into `~
   cover-letters/    cover letter templates
   themes/           CSS themes
   applications/     one folder per job application
-  spicebag.log      background dashboard log (when using serve -d)
+  spicebag.log      background dashboard log (when using start -d)
 ```
 
 ## Uninstall
