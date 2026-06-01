@@ -6,13 +6,14 @@ Manage versioned CVs and cover letters in Markdown, export to PDF, track job app
 
 ## Installation
 
-### 1. Install the binary via Homebrew
+### 1. Install the binary
 
 ```bash
-brew install graditya/tap/prospector
+go install github.com/graditya/prospector/cmd/prospector@latest
+prospector init
 ```
 
-This installs the `prospector` binary, sets up `~/.config/prospector/`, and registers the MCP server with Claude Code automatically.
+> Binary releases via Homebrew tap are coming once published through GoReleaser.
 
 ### 2. Install the Claude Code plugin
 
@@ -54,12 +55,6 @@ Open `http://localhost:8080` to:
 - View experience stats and application analytics
 - Sync experience data from your CV files
 
-### Manual setup (without Homebrew)
-
-```bash
-go install github.com/graditya/prospector/cmd/prospector@latest
-prospector init   # sets up ~/.config/prospector/ and registers MCP server
-```
 
 ## Config
 

@@ -225,23 +225,14 @@ prospector/
     modern.css
   docker-compose.yml      ← Gotenberg service definition
   plugin.json             ← Claude marketplace manifest (skills + MCP config only)
-  Formula/
-    prospector.rb         ← Homebrew formula
+  .goreleaser.yml         ← GoReleaser config (binary releases + Homebrew tap, added later)
   README.md
 ```
 
 ### Distribution: two separate concerns
 
-**Binary distribution — Homebrew:**
-The `prospector` binary is distributed via Homebrew. The formula:
-1. Installs the pre-compiled binary to PATH
-2. Installs default themes to `~/.config/prospector/themes/`
-3. Installs `docker-compose.yml` to `~/.config/prospector/`
-4. Runs `prospector init` on post-install to create `~/.config/prospector/` structure and default `config.toml`
-
-```
-brew install graditya/tap/prospector
-```
+**Binary distribution — GoReleaser (planned):**
+Binary releases will be published via GoReleaser (GitHub Releases + Homebrew tap). Not in scope for initial implementation — users build from source with `go install` during development.
 
 **`prospector init` subcommand** (also callable manually, idempotent):
 1. Create `~/.config/prospector/` directory structure
@@ -266,9 +257,9 @@ Lightweight package: only skills and MCP config. Does not install the binary —
 }
 ```
 
-### Full install flow
+### Full install flow (once released via GoReleaser)
 ```bash
-# 1. Install binary via Homebrew
+# 1. Install binary (via Homebrew tap — configured with GoReleaser later)
 brew install graditya/tap/prospector
 
 # 2. Install Claude Code plugin from marketplace
@@ -279,6 +270,12 @@ prospector up
 
 # 4. Start dashboard
 prospector serve
+```
+
+### Dev / pre-release install
+```bash
+go install github.com/graditya/prospector/cmd/prospector@latest
+prospector init
 ```
 
 ---
