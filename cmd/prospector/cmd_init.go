@@ -2,8 +2,10 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -41,6 +43,22 @@ func newInitCmd() *cobra.Command {
 			}
 			store.Close()
 			fmt.Println("Initialized database at", dbPath)
+
+			// extract default themes (skip any already customised by the user)
+			if err := extractEmbedDir(themesFS, "themes", filepath.Join(root, "themes")); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not extract default themes: %v\n", err)
+			} else {
+				fmt.Println("Extracted default themes to", filepath.Join(root, "themes"))
+			}
+
+			// install slash command skills to ~/.claude/commands/prospector/
+			home, _ := os.UserHomeDir()
+			commandsDir := filepath.Join(home, ".claude", "commands", "prospector")
+			if err := extractEmbedDir(skillsFS, "skills", commandsDir); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not install skills: %v\n", err)
+			} else {
+				fmt.Println("Installed skills to", commandsDir)
+			}
 
 			// copy docker-compose.yml from next to binary to ~/.config/prospector/
 			composeDest := filepath.Join(root, "docker-compose.yml")
@@ -131,4 +149,28 @@ func printMCPConfig() {
     "prospector": { "command": "prospector", "args": ["mcp"] }
   }
 }`)
+}
+
+func extractEmbedDir(fsys embed.FS, src, dst string) error {
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+	return fs.WalkDir(fsys, src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, _ := filepath.Rel(src, path)
+		destPath := filepath.Join(dst, rel)
+		if _, err := os.Stat(destPath); err == nil {
+			return nil // skip existing files
+		}
+		data, err := fsys.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(destPath, data, 0644)
+	})
 }
