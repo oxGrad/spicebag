@@ -1,8 +1,10 @@
 package fs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func coverLetterDir(root string) string { return filepath.Join(root, "cover-letters") }
@@ -12,7 +14,12 @@ func ListCoverLetters(root string) ([]FileInfo, error) {
 }
 
 func ReadCoverLetter(root, filename string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(coverLetterDir(root), filename))
+	base := coverLetterDir(root)
+	resolved := filepath.Join(base, filename)
+	if !strings.HasPrefix(resolved, filepath.Clean(base)+string(os.PathSeparator)) {
+		return "", fmt.Errorf("invalid filename: %q", filename)
+	}
+	data, err := os.ReadFile(resolved)
 	return string(data), err
 }
 

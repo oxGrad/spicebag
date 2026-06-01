@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/graditya/prospector/internal/fs"
 	"github.com/stretchr/testify/assert"
@@ -50,8 +49,6 @@ func TestListCoverLetters(t *testing.T) {
 	require.Len(t, files, 1)
 	assert.Equal(t, "cl-general-2025-01-01.md", files[0].Name)
 }
-
-var _ = time.Now // suppress unused import
 
 func TestCreateApplication(t *testing.T) {
 	root := t.TempDir()

@@ -1,9 +1,11 @@
 package fs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -20,7 +22,12 @@ func ListCVs(root string) ([]FileInfo, error) {
 }
 
 func ReadCV(root, filename string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(cvDir(root), filename))
+	base := cvDir(root)
+	resolved := filepath.Join(base, filename)
+	if !strings.HasPrefix(resolved, filepath.Clean(base)+string(os.PathSeparator)) {
+		return "", fmt.Errorf("invalid filename: %q", filename)
+	}
+	data, err := os.ReadFile(resolved)
 	return string(data), err
 }
 
@@ -47,6 +54,7 @@ func listMarkdownFiles(dir string) ([]FileInfo, error) {
 		}
 		info, err := e.Info()
 		if err != nil {
+			// file was deleted between ReadDir and Info; skip it
 			continue
 		}
 		files = append(files, FileInfo{Name: e.Name(), ModifiedAt: info.ModTime(), Size: info.Size()})

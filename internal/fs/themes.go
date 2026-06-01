@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,11 @@ func ListThemes(root string) ([]string, error) {
 }
 
 func ReadTheme(root, name string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(themeDir(root), name+".css"))
+	base := themeDir(root)
+	resolved := filepath.Join(base, name+".css")
+	if !strings.HasPrefix(resolved, filepath.Clean(base)+string(os.PathSeparator)) {
+		return "", fmt.Errorf("invalid filename: %q", name)
+	}
+	data, err := os.ReadFile(resolved)
 	return string(data), err
 }
