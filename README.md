@@ -47,7 +47,7 @@ spicebag serve -d     # background (logs to ~/.config/spicebag/spicebag.log)
 spicebag stop         # stop background server
 ```
 
-Open `http://localhost:8080` in your browser.
+Open `http://localhost:8080` in your browser. The dashboard includes a Gotenberg status widget — use it to start the PDF export service when needed.
 
 ## Slash commands
 

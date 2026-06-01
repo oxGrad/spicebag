@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -48,6 +49,9 @@ func (s *Server) waitForGotenberg(maxAttempts int) bool {
 
 func (s *Server) defaultRunCompose(args ...string) error {
 	composePath := filepath.Join(s.root, "docker-compose.yml")
+	if _, err := os.Stat(composePath); os.IsNotExist(err) {
+		return fmt.Errorf("docker-compose.yml not found at %s — run spicebag init first", composePath)
+	}
 	baseArgs := append([]string{"compose", "-f", composePath}, args...)
 	cmd := exec.Command("docker", baseArgs...)
 	var stderr bytes.Buffer
