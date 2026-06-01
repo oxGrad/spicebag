@@ -25,9 +25,39 @@ No more generic CVs. Just perfectly seasoned applications for every role you app
 
 ## Installation
 
-### Option A — Claude Plugin Marketplace
+### Option A — Homebrew
 
-If you use Claude Code's plugin system, install directly from the marketplace.
+```bash
+brew install oxGrad/tap/spicebag
+```
+
+### Option B — go install
+
+```bash
+go install github.com/oxGrad/spicebag/cmd/spicebag@latest
+```
+
+### Setup (Options A and B)
+
+```bash
+spicebag init
+```
+
+This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes to `~/.config/spicebag/themes/`, and installs slash commands to `~/.claude/commands/spicebag/`.
+
+### Open the dashboard
+
+```bash
+spicebag serve        # foreground
+spicebag serve -d     # background (logs to ~/.config/spicebag/spicebag.log)
+spicebag stop         # stop background server
+```
+
+Open `http://localhost:8080` in your browser. The dashboard includes a Gotenberg status widget — use it to start the PDF export service when needed.
+
+## Claude Plugin Marketplace
+
+Install directly from the marketplace — no `spicebag init` needed.
 
 **1. Add the marketplace** (first time only):
 
@@ -41,35 +71,7 @@ claude plugin marketplace add oxGrad/spicebag
 claude plugin install spicebag@spicebag
 ```
 
-This installs the binary, registers the MCP server, installs default themes, and adds slash commands automatically — no need to run `spicebag init` separately.
-
----
-
-### Option B — go install
-
-### 1. Add your spices to the bag
-
-```bash
-go install github.com/oxGrad/spicebag/cmd/spicebag@latest
-```
-
-### 2. Season your workspace (Option B only)
-
-```bash
-spicebag init
-```
-
-This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes to `~/.config/spicebag/themes/`, and installs slash commands to `~/.claude/commands/spicebag/`.
-
-### 3. Open the dashboard
-
-```bash
-spicebag serve        # foreground
-spicebag serve -d     # background (logs to ~/.config/spicebag/spicebag.log)
-spicebag stop         # stop background server
-```
-
-Open `http://localhost:8080` in your browser. The dashboard includes a Gotenberg status widget — use it to start the PDF export service when needed.
+This registers the MCP server, installs default themes, and adds slash commands automatically.
 
 ## Slash commands
 
