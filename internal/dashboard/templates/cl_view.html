@@ -14,11 +14,14 @@
       </select>
       <button type="submit" class="border rounded px-3 py-1.5 text-sm bg-white hover:bg-gray-50">Preview</button>
     </form>
-    <form method="post" action="/export">
-      <input type="hidden" name="file_path" value="cover-letters/{{.Name}}">
-      <input type="hidden" name="theme" value="{{.SelectedTheme}}">
-      <button type="submit" class="bg-blue-600 text-white rounded px-3 py-1.5 text-sm hover:bg-blue-700">Export PDF</button>
-    </form>
+    <div hx-get="/gotenberg/status?file_path=cover-letters/{{.Name}}&theme={{.SelectedTheme}}"
+         hx-trigger="load"
+         hx-swap="outerHTML">
+      <button type="button" disabled
+              class="bg-blue-300 text-white rounded px-3 py-1.5 text-sm cursor-not-allowed">
+        Export PDF
+      </button>
+    </div>
   </div>
 </div>
 {{.ThemeStyle}}
