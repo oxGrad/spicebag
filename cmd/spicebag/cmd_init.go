@@ -135,8 +135,12 @@ func registerMCPServer() error {
 	if servers == nil {
 		servers = map[string]any{}
 	}
+	exe, err := os.Executable()
+	if err != nil {
+		exe = "spicebag" // fallback: hope it's on PATH
+	}
 	servers["spicebag"] = map[string]any{
-		"command": "spicebag",
+		"command": exe,
 		"args":    []string{"mcp"},
 	}
 	mcpCfg["mcpServers"] = servers
