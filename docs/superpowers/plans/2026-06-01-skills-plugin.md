@@ -51,7 +51,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/graditya/prospector/internal/assets"
+	"github.com/oxGrad/spicebag/internal/assets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -457,8 +457,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -478,7 +478,7 @@ Wait — `//go:embed` cannot traverse with `..`. Instead, import the assets pack
 package main
 
 import (
-	"github.com/graditya/prospector/internal/assets"
+	"github.com/oxGrad/spicebag/internal/assets"
 )
 
 var themesFS = assets.ThemesFS
@@ -493,7 +493,7 @@ This avoids the `..` issue by delegating to the `internal/assets` package which 
 // cmd/prospector/assets.go
 package main
 
-import "github.com/graditya/prospector/internal/assets"
+import "github.com/oxGrad/spicebag/internal/assets"
 
 var themesFS = assets.ThemesFS
 var skillsFS = assets.SkillsFS
@@ -549,8 +549,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 ```
@@ -565,8 +565,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 ```
@@ -740,7 +740,7 @@ CV, cover letter, and job application manager that integrates with Claude Code.
 
 ```bash
 # 1. Build and install the binary
-go install github.com/graditya/prospector/cmd/prospector@latest
+go install github.com/oxGrad/spicebag/cmd/prospector@latest
 
 # 2. Set up config, database, and install skills
 prospector init

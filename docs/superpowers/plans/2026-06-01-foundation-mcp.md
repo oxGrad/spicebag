@@ -97,10 +97,10 @@ experience:
 
 ```bash
 cd /home/graditya/projects/prospector
-go mod init github.com/graditya/prospector
+go mod init github.com/oxGrad/spicebag
 ```
 
-Expected: `go.mod` created with `module github.com/graditya/prospector` and `go 1.22`.
+Expected: `go.mod` created with `module github.com/oxGrad/spicebag` and `go 1.22`.
 
 - [ ] **Step 2: Install dependencies**
 
@@ -181,7 +181,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/config"
+	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -308,7 +308,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -773,7 +773,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1150,7 +1150,7 @@ package parser_test
 import (
 	"testing"
 
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1277,7 +1277,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/graditya/prospector/internal/pdf"
+	"github.com/oxGrad/spicebag/internal/pdf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1396,8 +1396,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/fs"
-	prospectormcp "github.com/graditya/prospector/internal/mcp"
+	"github.com/oxGrad/spicebag/internal/fs"
+	prospectormcp "github.com/oxGrad/spicebag/internal/mcp"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1478,7 +1478,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -1557,7 +1557,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1618,7 +1618,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1678,7 +1678,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1758,7 +1758,7 @@ func TestCreateApplicationTool(t *testing.T) {
 
 Add this import to the test file's import block:
 ```go
-"github.com/graditya/prospector/internal/db"
+"github.com/oxGrad/spicebag/internal/db"
 ```
 
 - [ ] **Step 2: Run to confirm they fail**
@@ -1781,7 +1781,7 @@ import (
 	"os"
 	"path/filepath"
 
-	pdfpkg "github.com/graditya/prospector/internal/pdf"
+	pdfpkg "github.com/oxGrad/spicebag/internal/pdf"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1860,8 +1860,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -1956,8 +1956,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -2070,8 +2070,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	prospectormcp "github.com/graditya/prospector/internal/mcp"
+	"github.com/oxGrad/spicebag/internal/config"
+	prospectormcp "github.com/oxGrad/spicebag/internal/mcp"
 	"github.com/spf13/cobra"
 )
 
@@ -2142,9 +2142,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/parser"
 	"github.com/spf13/cobra"
 )
 

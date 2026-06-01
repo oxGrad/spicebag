@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/parser"
 	"github.com/spf13/cobra"
 )
 

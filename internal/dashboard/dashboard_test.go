@@ -12,10 +12,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/dashboard"
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/dashboard"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +27,7 @@ func newTestServer(t *testing.T) *dashboard.Server {
 	require.NoError(t, err)
 	t.Cleanup(func() { store.Close() })
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
-		os.MkdirAll(filepath.Join(root, d), 0755)
+		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	cfg := config.Config{GotenbergURL: "http://localhost:3000", DashboardPort: 8080}
 	return dashboard.NewServer(root, store, cfg)
@@ -163,7 +163,7 @@ func TestStatsSyncRoute(t *testing.T) {
 func TestThemesListRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { font-family: serif; }"), 0644)
+	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { font-family: serif; }"), 0o644)
 
 	req := httptest.NewRequest(http.MethodGet, "/themes", nil)
 	w := httptest.NewRecorder()
@@ -175,7 +175,7 @@ func TestThemesListRoute(t *testing.T) {
 func TestThemePreviewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0644)
+	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0o644)
 	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello World"))
 
 	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.md", nil)
@@ -213,7 +213,7 @@ func TestExportRoute(t *testing.T) {
 	store, _ := db.Open(filepath.Join(root, "test.db"))
 	defer store.Close()
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
-		os.MkdirAll(filepath.Join(root, d), 0755)
+		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	cfg := config.Config{GotenbergURL: gotenberg.URL}
 	srv := dashboard.NewServer(root, store, cfg)

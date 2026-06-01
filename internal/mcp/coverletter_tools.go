@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -24,7 +24,8 @@ func (s *Server) registerCoverLetterTools() {
 	)
 
 	s.mcpSrv.AddTool(
-		mcplib.NewTool("read_cover_letter",
+		mcplib.NewTool(
+			"read_cover_letter",
 			mcplib.WithDescription("Read a cover letter's markdown content"),
 			mcplib.WithString("filename", mcplib.Required(), mcplib.Description("Cover letter filename to read")),
 		),
@@ -39,7 +40,8 @@ func (s *Server) registerCoverLetterTools() {
 	)
 
 	s.mcpSrv.AddTool(
-		mcplib.NewTool("write_cover_letter",
+		mcplib.NewTool(
+			"write_cover_letter",
 			mcplib.WithDescription("Save a new cover letter file"),
 			mcplib.WithString("filename", mcplib.Required(), mcplib.Description("Filename e.g. cl-stripe-2025-06-01.md")),
 			mcplib.WithString("content", mcplib.Required(), mcplib.Description("Full markdown content")),

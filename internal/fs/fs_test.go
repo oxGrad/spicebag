@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,9 +78,9 @@ func TestCreateApplication(t *testing.T) {
 func TestListThemes(t *testing.T) {
 	root := t.TempDir()
 	themeDir := filepath.Join(root, "themes")
-	require.NoError(t, os.MkdirAll(themeDir, 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "minimal.css"), []byte("body{}"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "modern.css"), []byte("body{}"), 0644))
+	require.NoError(t, os.MkdirAll(themeDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "minimal.css"), []byte("body{}"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "modern.css"), []byte("body{}"), 0o644))
 
 	themes, err := fs.ListThemes(root)
 	require.NoError(t, err)

@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ func newInitCmd() *cobra.Command {
 
 			dirs := []string{"cv", "cover-letters", "themes", "applications"}
 			for _, d := range dirs {
-				if err := os.MkdirAll(filepath.Join(root, d), 0755); err != nil {
+				if err := os.MkdirAll(filepath.Join(root, d), 0o755); err != nil {
 					return err
 				}
 			}
@@ -68,7 +68,7 @@ func newInitCmd() *cobra.Command {
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Warning: could not copy docker-compose.yml: %v\n", err)
 				} else {
-					if err := os.WriteFile(composeDest, data, 0644); err != nil {
+					if err := os.WriteFile(composeDest, data, 0o644); err != nil {
 						fmt.Fprintf(os.Stderr, "Warning: could not write docker-compose.yml: %v\n", err)
 					} else {
 						fmt.Println("Copied docker-compose.yml to", composeDest)
@@ -137,10 +137,10 @@ func registerMCPServer() error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(mcpConfigPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(mcpConfigPath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(mcpConfigPath, out, 0644)
+	return os.WriteFile(mcpConfigPath, out, 0o644)
 }
 
 func printMCPConfig() {
@@ -152,7 +152,7 @@ func printMCPConfig() {
 }
 
 func extractEmbedDir(fsys embed.FS, src, dst string) error {
-	if err := os.MkdirAll(dst, 0755); err != nil {
+	if err := os.MkdirAll(dst, 0o755); err != nil {
 		return err
 	}
 	return fs.WalkDir(fsys, src, func(path string, d fs.DirEntry, err error) error {
@@ -174,6 +174,6 @@ func extractEmbedDir(fsys embed.FS, src, dst string) error {
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(destPath, data, 0644)
+		return os.WriteFile(destPath, data, 0o644)
 	})
 }

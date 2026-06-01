@@ -277,7 +277,7 @@ prospector serve
 
 ### Dev / pre-release install
 ```bash
-go install github.com/graditya/prospector/cmd/prospector@latest
+go install github.com/oxGrad/spicebag/cmd/prospector@latest
 prospector init
 ```
 

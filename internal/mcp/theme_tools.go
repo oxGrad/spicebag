@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 )
 

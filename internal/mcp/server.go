@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/mark3labs/mcp-go/client"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -59,7 +59,7 @@ func (s *Server) CallTool(ctx context.Context, name string, args map[string]any)
 	}
 	initReq := mcplib.InitializeRequest{}
 	initReq.Params.ProtocolVersion = mcplib.LATEST_PROTOCOL_VERSION
-	initReq.Params.ClientInfo = mcplib.Implementation{Name: "prospector-test", Version: "1.0.0"}
+	initReq.Params.ClientInfo = mcplib.Implementation{Name: "spicebag-test", Version: "1.0.0"}
 	if _, err := c.Initialize(ctx, initReq); err != nil {
 		return "", fmt.Errorf("initializing client: %w", err)
 	}

@@ -28,7 +28,7 @@ No more generic CVs. Just perfectly seasoned applications for every role you app
 ### 1. Add your spices to the bag
 
 ```bash
-go install github.com/graditya/prospector/cmd/spicebag@latest
+go install github.com/oxGrad/spicebag/cmd/spicebag@latest
 ```
 
 ### 2. Season your workspace

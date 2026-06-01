@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/config"
+	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func TestLoadDefaults(t *testing.T) {
 func TestLoadFromFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.toml")
-	err := os.WriteFile(path, []byte("dashboard_port = 9090\ngotenberg_url = \"http://gotenberg:3000\"\n"), 0644)
+	err := os.WriteFile(path, []byte("dashboard_port = 9090\ngotenberg_url = \"http://gotenberg:3000\"\n"), 0o644)
 	require.NoError(t, err)
 
 	cfg, err := config.Load(path)

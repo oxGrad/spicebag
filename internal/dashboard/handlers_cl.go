@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 )
 
 type clListData struct {

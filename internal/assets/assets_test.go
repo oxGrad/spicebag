@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/graditya/prospector/internal/assets"
+	"github.com/oxGrad/spicebag/internal/assets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

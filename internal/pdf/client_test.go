@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/graditya/prospector/internal/pdf"
+	"github.com/oxGrad/spicebag/internal/pdf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

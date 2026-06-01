@@ -226,9 +226,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/dashboard"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/dashboard"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -332,8 +332,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 )
 
 //go:embed templates
@@ -453,8 +453,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 )
 ```
 
@@ -618,7 +618,7 @@ Add these imports to the test file import block:
 ```go
 "fmt"
 "strings"
-"github.com/graditya/prospector/internal/db"
+"github.com/oxGrad/spicebag/internal/db"
 ```
 
 Also add a `Store()` accessor to `Server` in `server.go`:
@@ -757,7 +757,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/db"
 )
 
 var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted"}
@@ -899,7 +899,7 @@ func TestCVViewRoute(t *testing.T) {
 
 Add to server.go: `func (s *Server) Root() string { return s.root }`
 
-Add to test imports: `"github.com/graditya/prospector/internal/fs"`
+Add to test imports: `"github.com/oxGrad/spicebag/internal/fs"`
 
 - [ ] **Step 2: Run to confirm they fail**
 
@@ -977,7 +977,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 )
 
 type cvListData struct {
@@ -1158,7 +1158,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 )
 
 type clListData struct {
@@ -1342,9 +1342,9 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/parser"
 )
 
 type statsPageData struct {
@@ -1575,8 +1575,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/pdf"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/pdf"
 )
 
 type themesPageData struct {
@@ -1753,9 +1753,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/dashboard"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/dashboard"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 

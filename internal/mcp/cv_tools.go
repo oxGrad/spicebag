@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/fs"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -24,7 +24,8 @@ func (s *Server) registerCVTools() {
 	)
 
 	s.mcpSrv.AddTool(
-		mcplib.NewTool("read_cv",
+		mcplib.NewTool(
+			"read_cv",
 			mcplib.WithDescription("Read a base CV's markdown content"),
 			mcplib.WithString("filename", mcplib.Required(), mcplib.Description("CV filename to read")),
 		),
@@ -39,7 +40,8 @@ func (s *Server) registerCVTools() {
 	)
 
 	s.mcpSrv.AddTool(
-		mcplib.NewTool("write_cv",
+		mcplib.NewTool(
+			"write_cv",
 			mcplib.WithDescription("Save a new base CV file"),
 			mcplib.WithString("filename", mcplib.Required(), mcplib.Description("Filename e.g. cv-backend-2025-06-01.md")),
 			mcplib.WithString("content", mcplib.Required(), mcplib.Description("Full markdown content including frontmatter")),

@@ -1,4 +1,4 @@
-module github.com/graditya/prospector
+module github.com/oxGrad/spicebag
 
 go 1.26.2
 

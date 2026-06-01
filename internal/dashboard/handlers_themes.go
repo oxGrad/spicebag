@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/pdf"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/pdf"
 )
 
 type themesPageData struct {
@@ -71,7 +71,7 @@ func (s *Server) handleThemeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	themeDir := filepath.Join(s.root, "themes")
-	if err := os.MkdirAll(themeDir, 0755); err != nil {
+	if err := os.MkdirAll(themeDir, 0o755); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

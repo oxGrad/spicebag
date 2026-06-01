@@ -10,9 +10,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/dashboard"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/dashboard"
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func newServeCmd() *cobra.Command {
 			logPath := filepath.Join(root, "spicebag.log")
 
 			if daemon {
-				logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+				logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 				if err != nil {
 					return fmt.Errorf("open log: %w", err)
 				}
@@ -43,7 +43,7 @@ func newServeCmd() *cobra.Command {
 				logFile.Close()
 
 				pidStr := strconv.Itoa(child.Process.Pid) + "\n"
-				if err := os.WriteFile(pidPath, []byte(pidStr), 0644); err != nil {
+				if err := os.WriteFile(pidPath, []byte(pidStr), 0o644); err != nil {
 					return fmt.Errorf("write PID: %w", err)
 				}
 

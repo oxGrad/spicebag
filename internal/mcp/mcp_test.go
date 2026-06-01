@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
-	prospectormcp "github.com/graditya/prospector/internal/mcp"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
+	prospectormcp "github.com/oxGrad/spicebag/internal/mcp"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

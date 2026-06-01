@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/parser"
 )
 
 type statsPageData struct {

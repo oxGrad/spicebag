@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/graditya/prospector/internal/config"
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/config"
+	"github.com/oxGrad/spicebag/internal/db"
 )
 
 //go:embed templates
@@ -44,7 +44,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Store returns the underlying DB store (used in tests).
 func (s *Server) Store() *db.Store { return s.store }
 
-// Root returns the prospector data root directory (used in tests).
+// Root returns the spicebag data root directory (used in tests).
 func (s *Server) Root() string { return s.root }
 
 // routes registers all URL patterns.

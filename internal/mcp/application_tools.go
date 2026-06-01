@@ -5,14 +5,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graditya/prospector/internal/db"
-	"github.com/graditya/prospector/internal/fs"
+	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/fs"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 )
 
 func (s *Server) registerApplicationTools() {
 	s.mcpSrv.AddTool(
-		mcplib.NewTool("create_application",
+		mcplib.NewTool(
+			"create_application",
 			mcplib.WithDescription("Create full application folder with CV, cover letter, job post, and metadata"),
 			mcplib.WithString("company", mcplib.Required(), mcplib.Description("Company name")),
 			mcplib.WithString("role", mcplib.Required(), mcplib.Description("Role/job title")),

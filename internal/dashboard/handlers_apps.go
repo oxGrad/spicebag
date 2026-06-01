@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/graditya/prospector/internal/db"
+	"github.com/oxGrad/spicebag/internal/db"
 )
 
 var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted"}
@@ -63,7 +63,8 @@ func (s *Server) handleAppDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// app_detail.html uses {{template "status_history" .History}}, so parse both templates together.
-	t, err := template.ParseFS(templateFS,
+	t, err := template.ParseFS(
+		templateFS,
 		"templates/layout.html",
 		"templates/app_detail.html",
 		"templates/status_history.html",

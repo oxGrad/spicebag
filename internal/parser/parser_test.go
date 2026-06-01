@@ -4,7 +4,7 @@ package parser_test
 import (
 	"testing"
 
-	"github.com/graditya/prospector/internal/parser"
+	"github.com/oxGrad/spicebag/internal/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

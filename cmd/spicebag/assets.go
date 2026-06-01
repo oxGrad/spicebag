@@ -1,7 +1,9 @@
 // cmd/spicebag/assets.go
 package main
 
-import "github.com/graditya/prospector/internal/assets"
+import "github.com/oxGrad/spicebag/internal/assets"
 
-var themesFS = assets.ThemesFS
-var skillsFS = assets.SkillsFS
+var (
+	themesFS = assets.ThemesFS
+	skillsFS = assets.SkillsFS
+)

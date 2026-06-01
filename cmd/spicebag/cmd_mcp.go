@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/graditya/prospector/internal/config"
-	prospectormcp "github.com/graditya/prospector/internal/mcp"
+	spicebagmcp "github.com/oxGrad/spicebag/internal/mcp"
+	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func newMCPCmd() *cobra.Command {
 				return fmt.Errorf("load config: %w", err)
 			}
 
-			srv, err := prospectormcp.NewServer(root, filepath.Join(root, "spicebag.db"), cfg.GotenbergURL)
+			srv, err := spicebagmcp.NewServer(root, filepath.Join(root, "spicebag.db"), cfg.GotenbergURL)
 			if err != nil {
 				return fmt.Errorf("init MCP server: %w", err)
 			}
