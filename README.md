@@ -30,7 +30,9 @@ prospector up
 ### 4. Start the dashboard
 
 ```bash
-prospector serve
+prospector serve        # foreground
+prospector serve -d     # background (logs to ~/.config/prospector/prospector.log)
+prospector stop         # stop background server
 ```
 
 Then open `http://localhost:8080` in your browser.

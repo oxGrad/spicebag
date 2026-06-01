@@ -20,8 +20,11 @@ Prospector is a personal CV and cover letter management tool that integrates wit
 ### Entrypoints
 
 - `prospector mcp` — started by Claude Code automatically via MCP config; exposes tools over stdio
-- `prospector serve` — started manually by user; serves web dashboard (default port in `config.toml`)
-- `prospector up` — starts Gotenberg via docker-compose
+- `prospector serve` — serves web dashboard in foreground; logs to stdout
+- `prospector serve -d` — serves web dashboard in background; writes PID to `~/.config/prospector/prospector.pid`, logs to `~/.config/prospector/prospector.log`
+- `prospector stop` — kills the background dashboard process (reads PID file)
+- `prospector up` — starts Gotenberg via `docker compose up -d`
+- `prospector init` — sets up `~/.config/prospector/` and registers MCP server with Claude Code (idempotent)
 - `prospector sync` — re-parses all base CVs and refreshes SQLite (also available as dashboard button)
 
 ---
