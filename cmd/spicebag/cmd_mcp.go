@@ -3,10 +3,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
 
-	spicebagmcp "github.com/oxGrad/spicebag/internal/mcp"
 	"github.com/oxGrad/spicebag/internal/config"
+	spicebagmcp "github.com/oxGrad/spicebag/internal/mcp"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,12 @@ func newMCPCmd() *cobra.Command {
 		Short: "Start MCP server (called automatically by Claude Code)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := spicebagRoot()
+			if needsInit(root) {
+				if err := runInit(root, io.Discard); err != nil {
+					return fmt.Errorf("auto-init: %w", err)
+				}
+			}
+
 			cfgPath := filepath.Join(root, "config.toml")
 			cfg, err := config.Load(cfgPath)
 			if err != nil {

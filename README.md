@@ -37,14 +37,6 @@ brew install oxGrad/tap/spicebag
 go install github.com/oxGrad/spicebag/cmd/spicebag@latest
 ```
 
-### Setup (Options A and B)
-
-```bash
-spicebag init
-```
-
-This creates `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes to `~/.config/spicebag/themes/`, and installs slash commands to `~/.claude/commands/spicebag/`.
-
 ### Open the dashboard
 
 ```bash
@@ -53,7 +45,9 @@ spicebag start -d     # background (logs to ~/.config/spicebag/spicebag.log)
 spicebag stop         # stop background server
 ```
 
-Open `http://localhost:8080` in your browser. The dashboard includes a Gotenberg status widget — use it to start the PDF export service when needed.
+On first run, `spicebag start` automatically sets up `~/.config/spicebag/`, registers the MCP server with Claude Code, installs default themes, and adds slash commands. Open `http://localhost:8080` in your browser. The dashboard includes a Gotenberg status widget — use it to start the PDF export service when needed.
+
+> Run `spicebag init` manually to re-run setup at any time.
 
 ## Claude Plugin Marketplace
 
@@ -99,7 +93,7 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 
 | Command | Description |
 |---|---|
-| `spicebag init` | First-time setup: config dir, MCP registration, themes, slash commands |
+| `spicebag init` | Re-run setup: config dir, MCP registration, themes, slash commands |
 | `spicebag start` | Start the dashboard (foreground) |
 | `spicebag start -d` | Start the dashboard (background) |
 | `spicebag stop` | Stop the background dashboard server |

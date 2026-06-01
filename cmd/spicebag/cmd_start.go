@@ -24,6 +24,13 @@ func newStartCmd() *cobra.Command {
 		Short: "Start the web dashboard",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := spicebagRoot()
+			if needsInit(root) {
+				fmt.Println("First run — setting up Spice Bag...")
+				if err := runInit(root, os.Stdout); err != nil {
+					return fmt.Errorf("auto-init: %w", err)
+				}
+				fmt.Println()
+			}
 			pidPath := filepath.Join(root, "spicebag.pid")
 			logPath := filepath.Join(root, "spicebag.log")
 
