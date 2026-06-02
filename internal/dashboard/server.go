@@ -4,7 +4,9 @@ package dashboard
 import (
 	"embed"
 	"fmt"
+	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/db"
@@ -94,17 +96,27 @@ func parseID(r *http.Request, param string) (int64, bool) {
 // handleSPA serves the embedded Vue SPA, falling back to index.html for
 // client-side routes (anything that is not a real file in the ui directory).
 func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
-	path := "ui" + r.URL.Path
-	f, err := uiFS.Open(path)
+	sub, err := fs.Sub(uiFS, "ui")
+	if err != nil {
+		http.Error(w, "ui filesystem error", http.StatusInternalServerError)
+		return
+	}
+	// Try serving the exact path as a static file
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	if path == "" {
+		path = "."
+	}
+	f, err := sub.Open(path)
 	if err == nil {
 		fi, sterr := f.Stat()
 		f.Close()
 		if sterr == nil && !fi.IsDir() {
-			http.FileServer(http.FS(uiFS)).ServeHTTP(w, r)
+			http.FileServer(http.FS(sub)).ServeHTTP(w, r)
 			return
 		}
 	}
-	data, err := uiFS.ReadFile("ui/index.html")
+	// SPA fallback — serve index.html for all unmatched routes
+	data, err := fs.ReadFile(sub, "index.html")
 	if err != nil {
 		http.Error(w, "dashboard not built: run 'just build-frontend'", http.StatusInternalServerError)
 		return
