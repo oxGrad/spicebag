@@ -57,7 +57,8 @@ func (s *Server) handleThemeUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/themes", http.StatusSeeOther)
+	w.WriteHeader(http.StatusCreated)
+	writeJSON(w, map[string]string{"name": strings.TrimSuffix(name, ".css")})
 }
 
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {

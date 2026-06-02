@@ -198,7 +198,7 @@ func TestThemeUploadRoute(t *testing.T) {
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusSeeOther, w.Code)
+	assert.Equal(t, http.StatusCreated, w.Code)
 }
 
 func TestExportRoute(t *testing.T) {
