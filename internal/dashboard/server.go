@@ -74,12 +74,11 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/themes/upload", s.handleThemeUpload)
 	s.mux.HandleFunc("POST /api/export", s.handleExport)
 
-	s.mux.HandleFunc("GET /stats", s.handleStats)
-	s.mux.HandleFunc("POST /stats/sync", s.handleStatsSync)
+	s.mux.HandleFunc("GET /api/stats", s.handleAPIStats)
 
-	s.mux.HandleFunc("GET /gotenberg/status", s.handleGotenbergStatus)
-	s.mux.HandleFunc("POST /gotenberg/start", s.handleGotenbergStart)
-	s.mux.HandleFunc("POST /gotenberg/stop", s.handleGotenbergStop)
+	s.mux.HandleFunc("GET /api/gotenberg/status", s.handleAPIGotenbergStatus)
+	s.mux.HandleFunc("POST /api/gotenberg/start", s.handleAPIGotenbergStart)
+	s.mux.HandleFunc("POST /api/gotenberg/stop", s.handleAPIGotenbergStop)
 
 	s.mux.HandleFunc("/", s.handleSPA)
 }

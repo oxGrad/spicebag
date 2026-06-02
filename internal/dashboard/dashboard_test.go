@@ -139,25 +139,12 @@ func TestStatsRoute(t *testing.T) {
 		{RoleType: "backend", Company: "Acme", StartDate: "2020-01-01", EndDate: "2022-01-01", SyncedFrom: "cv.md"},
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/stats", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Contains(t, w.Body.String(), "backend")
-}
-
-func TestStatsSyncRoute(t *testing.T) {
-	srv := newTestServer(t)
-	root := srv.Root()
-	// write a CV with frontmatter so sync has something to parse
-	cvContent := "---\nexperience:\n  - role_type: devops\n    company: FooCo\n    start: \"2021-01-01\"\n    end: \"2023-01-01\"\n---\n<h1>CV</h1>\n"
-	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.html", cvContent))
-
-	req := httptest.NewRequest(http.MethodPost, "/stats/sync", nil)
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "devops")
 }
 
 func TestThemesListRoute(t *testing.T) {
@@ -246,14 +233,12 @@ func TestGotenbergStatusRunning(t *testing.T) {
 	}
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
 
-	req := httptest.NewRequest(http.MethodGet, "/gotenberg/status?file_path=cv%2Ftest.md&theme=", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg running")
-	assert.Contains(t, w.Body.String(), "Export PDF")
-	// export button must NOT be disabled when running
-	assert.NotContains(t, w.Body.String(), `disabled`)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":true`)
 }
 
 func TestGotenbergStatusStopped(t *testing.T) {
@@ -267,13 +252,12 @@ func TestGotenbergStatusStopped(t *testing.T) {
 	// point at a port with nothing listening
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
 
-	req := httptest.NewRequest(http.MethodGet, "/gotenberg/status?file_path=cv%2Ftest.md&theme=", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
-	assert.Contains(t, w.Body.String(), `disabled`)
-	assert.Contains(t, w.Body.String(), "Start Gotenberg to export PDF")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":false`)
 }
 
 func TestGotenbergStart(t *testing.T) {
@@ -294,14 +278,12 @@ func TestGotenbergStart(t *testing.T) {
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
 	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil }) // no-op: skip docker
 
-	form := strings.NewReader("file_path=cv%2Ftest.md&theme=minimal")
-	req := httptest.NewRequest(http.MethodPost, "/gotenberg/start", form)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/start", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg running")
-	assert.NotContains(t, w.Body.String(), "disabled")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":true`)
 }
 
 func TestGotenbergStop(t *testing.T) {
@@ -316,14 +298,31 @@ func TestGotenbergStop(t *testing.T) {
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
 	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil })
 
-	form := strings.NewReader("file_path=cover-letters%2Fcl.md&theme=")
-	req := httptest.NewRequest(http.MethodPost, "/gotenberg/stop", form)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/stop", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
-	assert.Contains(t, w.Body.String(), "disabled")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":false`)
+}
+
+func TestAPIStatsReturnsJSON(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+}
+
+func TestAPIGotenbergStatus(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "running")
 }
 
 func TestRenderCV(t *testing.T) {

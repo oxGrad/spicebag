@@ -12,11 +12,9 @@ import (
 	"time"
 )
 
-type gotenbergStatusData struct {
-	Running  bool
-	Err      string
-	FilePath string
-	Theme    string
+type gotenbergStatusJSON struct {
+	Running bool   `json:"running"`
+	Err     string `json:"error,omitempty"`
 }
 
 const gotenbergImage     = "gotenberg/gotenberg:8"
@@ -105,45 +103,26 @@ func (s *Server) defaultStopGotenberg() error {
 	}
 }
 
-func (s *Server) handleGotenbergStatus(w http.ResponseWriter, r *http.Request) {
-	data := gotenbergStatusData{
-		Running:  s.checkGotenberg(),
-		FilePath: r.URL.Query().Get("file_path"),
-		Theme:    r.URL.Query().Get("theme"),
-	}
-	s.renderPartial(w, "gotenberg_status.html", "gotenberg-status", data)
+func (s *Server) handleAPIGotenbergStatus(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, gotenbergStatusJSON{Running: s.checkGotenberg()})
 }
 
-func (s *Server) handleGotenbergStart(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "parse form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	data := gotenbergStatusData{
-		FilePath: r.FormValue("file_path"),
-		Theme:    r.FormValue("theme"),
-	}
+func (s *Server) handleAPIGotenbergStart(w http.ResponseWriter, r *http.Request) {
+	resp := gotenbergStatusJSON{}
 	if err := s.startGotenberg(); err != nil {
-		data.Err = err.Error()
-		data.Running = s.checkGotenberg()
+		resp.Err = err.Error()
+		resp.Running = s.checkGotenberg()
 	} else {
-		data.Running = s.waitForGotenberg(5)
+		resp.Running = s.waitForGotenberg(5)
 	}
-	s.renderPartial(w, "gotenberg_status.html", "gotenberg-status", data)
+	writeJSON(w, resp)
 }
 
-func (s *Server) handleGotenbergStop(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "parse form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	data := gotenbergStatusData{
-		FilePath: r.FormValue("file_path"),
-		Theme:    r.FormValue("theme"),
-	}
+func (s *Server) handleAPIGotenbergStop(w http.ResponseWriter, r *http.Request) {
+	resp := gotenbergStatusJSON{}
 	if err := s.stopGotenberg(); err != nil {
-		data.Err = err.Error()
+		resp.Err = err.Error()
 	}
-	data.Running = s.checkGotenberg()
-	s.renderPartial(w, "gotenberg_status.html", "gotenberg-status", data)
+	resp.Running = s.checkGotenberg()
+	writeJSON(w, resp)
 }
