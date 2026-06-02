@@ -325,3 +325,44 @@ func TestGotenbergStop(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
 	assert.Contains(t, w.Body.String(), "disabled")
 }
+
+func TestRenderCV(t *testing.T) {
+	srv := newTestServer(t)
+	fragment := "<h1>Gatra Raditya</h1><p>Engineer</p>"
+	require.NoError(t, fs.WriteCV(srv.Root(), "base.html", fragment))
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/base.html", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "<h1>Gatra Raditya</h1>")
+	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}
+
+func TestRenderCVWithTheme(t *testing.T) {
+	srv := newTestServer(t)
+	require.NoError(t, fs.WriteCV(srv.Root(), "base.html", "<h1>Test</h1>"))
+	os.WriteFile(filepath.Join(srv.Root(), "themes", "minimal.css"), []byte("body{color:red}"), 0644)
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/base.html?theme=minimal", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "body{color:red}")
+}
+
+func TestRenderCL(t *testing.T) {
+	srv := newTestServer(t)
+	fragment := "<p>Dear Hiring Team,</p>"
+	require.NoError(t, fs.WriteCoverLetter(srv.Root(), "cl.html", fragment))
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cl/cl.html", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "<p>Dear Hiring Team,</p>")
+	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}

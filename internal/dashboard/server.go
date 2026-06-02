@@ -62,6 +62,9 @@ func (s *Server) Root() string { return s.root }
 
 // routes registers all URL patterns.
 func (s *Server) routes() {
+	s.mux.HandleFunc("GET /render/cv/{name}", s.handleRenderCV)
+	s.mux.HandleFunc("GET /render/cl/{name}", s.handleRenderCL)
+
 	s.mux.HandleFunc("GET /", s.handleAppsList)
 	s.mux.HandleFunc("GET /apps/{id}", s.handleAppDetail)
 	s.mux.HandleFunc("POST /apps/{id}/status", s.handleAppStatusUpdate)

@@ -112,26 +112,16 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// read the markdown file
-	mdBytes, err := os.ReadFile(resolved)
+	// read the HTML fragment directly
+	fragment, err := os.ReadFile(resolved)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("read file: %v", err), http.StatusNotFound)
 		return
 	}
 
-	// render markdown to HTML
-	htmlContent := string(RenderMarkdown(string(mdBytes)))
-
-	// read theme CSS (optional)
-	var css string
-	if theme != "" {
-		if cssBytes, err := fs.ReadTheme(s.root, theme); err == nil {
-			css = cssBytes
-		}
-	}
-
+	css := s.themeCSS(theme)
 	client := pdf.NewClient(s.cfg.GotenbergURL)
-	pdfBytes, err := client.RenderPDF(htmlContent, css)
+	pdfBytes, err := client.RenderPDF(string(fragment), css)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("render PDF: %v", err), http.StatusInternalServerError)
 		return
