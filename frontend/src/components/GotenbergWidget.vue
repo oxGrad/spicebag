@@ -6,7 +6,7 @@
       :disabled="starting"
       class="border rounded px-3 py-1.5 text-sm bg-white hover:bg-gray-50 disabled:opacity-50"
     >
-      {{ starting ? 'Starting…' : 'Start Gotenberg' }}
+      {{ starting ? "Starting…" : "Start Gotenberg" }}
     </button>
     <button
       v-if="running"
@@ -27,55 +27,58 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from '../api.js'
+import { ref, onMounted } from "vue";
+import { api } from "../api.js";
 
 const props = defineProps({
   filePath: { type: String, required: true },
-  theme:    { type: String, default: '' },
-})
+  theme: { type: String, default: "" },
+});
 
-const running  = ref(false)
-const starting = ref(false)
-const err      = ref('')
+const running = ref(false);
+const starting = ref(false);
+const err = ref("");
 
 onMounted(async () => {
-  const s = await api.gotenberg.status()
-  running.value = s.running
-})
+  const s = await api.gotenberg.status();
+  running.value = s.running;
+});
 
 async function start() {
-  starting.value = true
-  err.value = ''
+  starting.value = true;
+  err.value = "";
   try {
-    const s = await api.gotenberg.start()
-    running.value = s.running
-    if (s.error) err.value = s.error
+    const s = await api.gotenberg.start();
+    running.value = s.running;
+    if (s.error) err.value = s.error;
   } catch (e) {
-    err.value = e.message
+    err.value = e.message;
   }
-  starting.value = false
+  starting.value = false;
 }
 
 async function stop() {
-  const s = await api.gotenberg.stop()
-  running.value = s.running
+  const s = await api.gotenberg.stop();
+  running.value = s.running;
 }
 
 async function exportPDF() {
-  err.value = ''
+  err.value = "";
   try {
-    const res = await api.export(props.filePath, props.theme)
-    if (!res.ok) { err.value = 'Export failed'; return }
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = props.filePath.split('/').pop().replace('.html', '.pdf')
-    a.click()
-    URL.revokeObjectURL(url)
+    const res = await api.export(props.filePath, props.theme);
+    if (!res.ok) {
+      err.value = "Export failed";
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = props.filePath.split("/").pop().replace(".html", ".pdf");
+    a.click();
+    URL.revokeObjectURL(url);
   } catch (e) {
-    err.value = e.message
+    err.value = e.message;
   }
 }
 </script>
