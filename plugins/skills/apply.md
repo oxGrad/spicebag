@@ -19,18 +19,41 @@ Required: job post content (file reference, URL, or free-text). Optional: compan
 4. Select the most relevant CV for this role and call `read_cv` to load it
 5. Call `get_experience_stats` for accurate years of experience per role type
 6. Write both documents in one pass:
-   - **Tailored CV**: adjust emphasis and wording for this role (keep all facts accurate)
-   - **Cover letter**: company-specific opener, concrete experience references, under 350 words
+
+   **Tailored CV** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags — just semantic body content):
+   - Use `<h1>` for the person's name
+   - Use `<h2>` for section headings (Experience, Education, Skills)
+   - Use `<h3>` for job titles with company on the same line or next line
+   - Use `<ul>/<li>` for bullet points
+   - Keep all factual data accurate; only adjust wording and emphasis for the role
+
+   **Cover letter** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags) using this structure:
+   ```html
+   <header>
+     <h1>Full Name</h1>
+     <div class="contact">email · phone · location · <a href="...">linkedin</a> · <a href="...">github</a></div>
+   </header>
+   <div class="date-block">DD Month YYYY</div>
+   <p class="salutation">Dear [Company] Hiring Team,</p>
+   <p>Body paragraph...</p>
+   <p>Body paragraph...</p>
+   <div class="closing">
+     <div class="sign-off">Sincerely,</div>
+     <div class="name">Full Name</div>
+   </div>
+   ```
+   - Company-specific opener, concrete experience references, under 350 words of body text
+
 7. Call `create_application` with:
    - `company`: company name (exact, as it appears in the job post)
    - `role`: role title (exact)
    - `date`: today in YYYY-MM-DD format
-   - `cv_content`: the tailored CV markdown
-   - `cover_letter_content`: the cover letter markdown
+   - `cv_content`: the tailored CV HTML fragment
+   - `cover_letter_content`: the cover letter HTML fragment
    - `job_post_content`: the full job post text
-   - `base_cv_used`: filename of the base CV selected in step 4
+   - `base_cv_used`: filename of the base CV selected in step 4 (e.g. `base.html` or `cv-{role}.html`)
 8. Report the application folder path created
-9. Remind the user to open the dashboard (`spicebag serve`) to track status
+9. Remind the user to open the dashboard (`spicebag start`) to track status
 
 ## Rules
 
