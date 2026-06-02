@@ -20,11 +20,13 @@ Required: job post content (file reference, URL, or free-text). Optional: compan
 5. Call `get_experience_stats` for accurate years of experience per role type
 6. Write both documents in one pass:
 
-   **Tailored CV** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags — just semantic body content):
-   - Use `<h1>` for the person's name
-   - Use `<h2>` for section headings (Experience, Education, Skills)
-   - Use `<h3>` for job titles with company on the same line or next line
-   - Use `<ul>/<li>` for bullet points
+   **Tailored CV** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags) using the standard CV structure:
+   - `<h1>` for the person's name
+   - `<p class="cv-contact">` for the contact line
+   - `<h2>` for section headings (Experience, Education, Skills)
+   - `<div class="cv-entry">` wrapping each job/education entry
+   - `<div class="cv-entry-header">` containing `<h3>` (job title), `<span class="cv-company">`, `<span class="cv-dates">`
+   - `<ul>/<li>` for bullet points
    - Keep all factual data accurate; only adjust wording and emphasis for the role
 
    **Cover letter** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags) using this structure:
