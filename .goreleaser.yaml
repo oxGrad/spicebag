@@ -38,7 +38,7 @@ changelog:
       - "^chore[:(]"
       - "^Merge "
 
-brews:
+homebrew:
   - name: spicebag
     repository:
       owner: oxGrad
