@@ -57,14 +57,11 @@ func (s *Server) defaultStartGotenberg() error {
 		}
 		return runCmd("podman", "compose", "-f", composePath, "up", "-d")
 	case "docker":
-		// stop+remove any stale container first (ignore errors)
-		runCmd("docker", "stop", gotenbergContainer)  //nolint:errcheck
-		runCmd("docker", "rm", gotenbergContainer)    //nolint:errcheck
-		return runCmd("docker", "run", "-d", "--name", gotenbergContainer, "-p", "3000:3000", gotenbergImage)
+		runCmd("docker", "stop", gotenbergContainer) //nolint:errcheck
+		return runCmd("docker", "run", "-d", "--rm", "--name", gotenbergContainer, "-p", "3000:3000", gotenbergImage)
 	case "podman":
 		runCmd("podman", "stop", gotenbergContainer) //nolint:errcheck
-		runCmd("podman", "rm", gotenbergContainer)   //nolint:errcheck
-		return runCmd("podman", "run", "-d", "--name", gotenbergContainer, "-p", "3000:3000", gotenbergImage)
+		return runCmd("podman", "run", "-d", "--rm", "--name", gotenbergContainer, "-p", "3000:3000", gotenbergImage)
 	default:
 		return fmt.Errorf("unknown gotenberg_runtime %q — valid values: docker-compose, docker, podman-compose, podman", s.cfg.GotenbergRuntime)
 	}
