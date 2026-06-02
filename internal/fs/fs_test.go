@@ -13,8 +13,8 @@ import (
 func TestListCVs(t *testing.T) {
 	root := t.TempDir()
 
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV"))
-	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.md", "# DevOps CV"))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1>"))
+	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.html", "<h1>DevOps CV</h1>"))
 
 	files, err := fs.ListCVs(root)
 	require.NoError(t, err)
@@ -23,31 +23,31 @@ func TestListCVs(t *testing.T) {
 
 func TestReadCV(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV\nContent here"))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1><p>Content here</p>"))
 
-	content, err := fs.ReadCV(root, "cv-backend-2025-01-01.md")
+	content, err := fs.ReadCV(root, "cv-backend-2025-01-01.html")
 	require.NoError(t, err)
-	assert.Equal(t, "# Backend CV\nContent here", content)
+	assert.Equal(t, "<h1>Backend CV</h1><p>Content here</p>", content)
 }
 
 func TestWriteCVCreatesDir(t *testing.T) {
 	root := t.TempDir()
-	err := fs.WriteCV(root, "cv-new-2025-01-01.md", "content")
+	err := fs.WriteCV(root, "cv-new-2025-01-01.html", "<p>content</p>")
 	require.NoError(t, err)
 
-	content, err := fs.ReadCV(root, "cv-new-2025-01-01.md")
+	content, err := fs.ReadCV(root, "cv-new-2025-01-01.html")
 	require.NoError(t, err)
-	assert.Equal(t, "content", content)
+	assert.Equal(t, "<p>content</p>", content)
 }
 
 func TestListCoverLetters(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager"))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p>"))
 
 	files, err := fs.ListCoverLetters(root)
 	require.NoError(t, err)
 	require.Len(t, files, 1)
-	assert.Equal(t, "cl-general-2025-01-01.md", files[0].Name)
+	assert.Equal(t, "cl-general-2025-01-01.html", files[0].Name)
 }
 
 func TestCreateApplication(t *testing.T) {
@@ -73,6 +73,29 @@ func TestCreateApplication(t *testing.T) {
 	meta, err := fs.ReadApplicationMetadata(root, folderPath)
 	require.NoError(t, err)
 	assert.Equal(t, "Stripe", meta.Company)
+}
+
+func TestListCVsHTML(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, "cv"), 0755)
+	os.WriteFile(filepath.Join(root, "cv", "base.html"), []byte("<h1>Test</h1>"), 0644)
+	os.WriteFile(filepath.Join(root, "cv", "old.md"), []byte("# old"), 0644) // should NOT appear
+
+	files, err := fs.ListCVs(root)
+	require.NoError(t, err)
+	require.Len(t, files, 1)
+	assert.Equal(t, "base.html", files[0].Name)
+}
+
+func TestWriteAndReadCVHTML(t *testing.T) {
+	root := t.TempDir()
+	content := "<h1>Gatra Raditya</h1><p>Engineer</p>"
+	err := fs.WriteCV(root, "base.html", content)
+	require.NoError(t, err)
+
+	got, err := fs.ReadCV(root, "base.html")
+	require.NoError(t, err)
+	assert.Equal(t, content, got)
 }
 
 func TestListThemes(t *testing.T) {

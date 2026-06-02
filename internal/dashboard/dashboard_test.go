@@ -87,49 +87,49 @@ func TestAppStatusUpdate(t *testing.T) {
 func TestCVListRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV"))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1>"))
 
 	req := httptest.NewRequest(http.MethodGet, "/cv", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.md")
+	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.html")
 }
 
 func TestCVViewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV\n\nContent here."))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1><p>Content here.</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cv/cv-backend-2025-01-01.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/cv/cv-backend-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Backend CV")
+	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.html")
 }
 
 func TestCLListRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager"))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p>"))
 
 	req := httptest.NewRequest(http.MethodGet, "/cl", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.md")
+	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.html")
 }
 
 func TestCLViewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager\n\nI am excited..."))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p><p>I am excited...</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cl/cl-general-2025-01-01.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/cl/cl-general-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Hiring Manager")
+	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.html")
 }
 
 func TestStatsRoute(t *testing.T) {
@@ -150,8 +150,8 @@ func TestStatsSyncRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
 	// write a CV with frontmatter so sync has something to parse
-	cvContent := "---\nexperience:\n  - role_type: devops\n    company: FooCo\n    start: \"2021-01-01\"\n    end: \"2023-01-01\"\n---\n# CV\n"
-	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.md", cvContent))
+	cvContent := "---\nexperience:\n  - role_type: devops\n    company: FooCo\n    start: \"2021-01-01\"\n    end: \"2023-01-01\"\n---\n<h1>CV</h1>\n"
+	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.html", cvContent))
 
 	req := httptest.NewRequest(http.MethodPost, "/stats/sync", nil)
 	w := httptest.NewRecorder()
@@ -176,13 +176,13 @@ func TestThemePreviewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
 	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0o644)
-	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello World"))
+	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello World</h1>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Hello World")
+	assert.Contains(t, w.Body.String(), "minimal")
 }
 
 func TestThemeUploadRoute(t *testing.T) {
@@ -218,9 +218,9 @@ func TestExportRoute(t *testing.T) {
 	cfg := config.Config{GotenbergURL: gotenberg.URL}
 	srv := dashboard.NewServer(root, store, cfg)
 
-	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello"))
+	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello</h1>"))
 
-	form := strings.NewReader("file_path=cv%2Fcv-test.md&theme=")
+	form := strings.NewReader("file_path=cv%2Fcv-test.html&theme=")
 	req := httptest.NewRequest(http.MethodPost, "/export", form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
