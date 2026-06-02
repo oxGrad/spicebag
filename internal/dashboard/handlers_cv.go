@@ -4,6 +4,7 @@ package dashboard
 import (
 	"html/template"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/oxGrad/spicebag/internal/fs"
@@ -19,6 +20,31 @@ type cvViewData struct {
 	Themes        []string
 	SelectedTheme string
 	ThemeStyle    template.HTML
+}
+
+var cssRuleRe = regexp.MustCompile(`([^{]+)\{([^}]*)\}`)
+
+// scopeCSS prefixes every selector in css with scope so theme styles only
+// affect the preview container. "body" is mapped to scope itself.
+func scopeCSS(css, scope string) string {
+	return cssRuleRe.ReplaceAllStringFunc(css, func(match string) string {
+		idx := strings.Index(match, "{")
+		if idx < 0 {
+			return match
+		}
+		rawSel := strings.TrimSpace(match[:idx])
+		decl := match[idx:]
+		parts := strings.Split(rawSel, ",")
+		for i, s := range parts {
+			s = strings.TrimSpace(s)
+			if s == "body" {
+				parts[i] = scope
+			} else {
+				parts[i] = scope + " " + s
+			}
+		}
+		return strings.Join(parts, ", ") + " " + decl
+	})
 }
 
 func (s *Server) handleCVList(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +70,8 @@ func (s *Server) handleCVView(w http.ResponseWriter, r *http.Request) {
 	var themeStyle template.HTML
 	if selectedTheme != "" {
 		if css, err := fs.ReadTheme(s.root, selectedTheme); err == nil {
-			themeStyle = template.HTML("<style>" + strings.ReplaceAll(css, "</style>", `<\/style>`) + "</style>")
+			scoped := scopeCSS(css, "#preview")
+			themeStyle = template.HTML("<style>" + strings.ReplaceAll(scoped, "</style>", `<\/style>`) + "</style>")
 		}
 	}
 

@@ -46,7 +46,7 @@ func runInit(root string, w io.Writer) error {
 
 	cfgPath := filepath.Join(root, "config.toml")
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
-		if err := config.Save(cfgPath, config.Config{DashboardPort: 8080, GotenbergURL: "http://localhost:3000"}); err != nil {
+		if err := config.Save(cfgPath, config.Config{DashboardPort: 8080, GotenbergURL: "http://localhost:3000", GotenbergRuntime: config.RuntimeDockerCompose}); err != nil {
 			return err
 		}
 		fmt.Fprintln(w, "Created", cfgPath)

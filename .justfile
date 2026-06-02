@@ -1,3 +1,6 @@
+run: build
+  ./spicebag start
+
 build:
   go build -o spicebag ./cmd/spicebag/
 

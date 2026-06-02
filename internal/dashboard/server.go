@@ -18,19 +18,27 @@ var templateFS embed.FS
 
 // Server holds all dependencies and the HTTP mux.
 type Server struct {
-	root       string
-	store      *db.Store
-	cfg        config.Config
-	mux        *http.ServeMux
-	runCompose func(args ...string) error
+	root            string
+	store           *db.Store
+	cfg             config.Config
+	mux             *http.ServeMux
+	startGotenberg  func() error
+	stopGotenberg   func() error
 }
 
 // NewServer creates a Server and registers all routes.
 func NewServer(root string, store *db.Store, cfg config.Config) *Server {
 	s := &Server{root: root, store: store, cfg: cfg, mux: http.NewServeMux()}
-	s.runCompose = s.defaultRunCompose
+	s.startGotenberg = s.defaultStartGotenberg
+	s.stopGotenberg = s.defaultStopGotenberg
 	s.routes()
 	return s
+}
+
+// SetGotenbergRunners replaces the start/stop executors — used in tests.
+func (s *Server) SetGotenbergRunners(start, stop func() error) {
+	s.startGotenberg = start
+	s.stopGotenberg = stop
 }
 
 // Serve starts the HTTP server on addr (e.g. ":8080").

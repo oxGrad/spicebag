@@ -292,7 +292,7 @@ func TestGotenbergStart(t *testing.T) {
 		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
-	srv.SetComposeRunner(func(args ...string) error { return nil }) // no-op: skip docker
+	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil }) // no-op: skip docker
 
 	form := strings.NewReader("file_path=cv%2Ftest.md&theme=minimal")
 	req := httptest.NewRequest(http.MethodPost, "/gotenberg/start", form)
@@ -314,7 +314,7 @@ func TestGotenbergStop(t *testing.T) {
 	}
 	// nothing listening on 19999 → healthcheck returns false → "stopped"
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
-	srv.SetComposeRunner(func(args ...string) error { return nil })
+	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil })
 
 	form := strings.NewReader("file_path=cover-letters%2Fcl.md&theme=")
 	req := httptest.NewRequest(http.MethodPost, "/gotenberg/stop", form)

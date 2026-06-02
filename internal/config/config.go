@@ -6,15 +6,28 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// GotenbergRuntime controls how the dashboard starts and stops Gotenberg.
+// Valid values: "docker-compose" (default), "docker", "podman-compose", "podman".
+type GotenbergRuntime string
+
+const (
+	RuntimeDockerCompose GotenbergRuntime = "docker-compose"
+	RuntimeDocker        GotenbergRuntime = "docker"
+	RuntimePodmanCompose GotenbergRuntime = "podman-compose"
+	RuntimePodman        GotenbergRuntime = "podman"
+)
+
 type Config struct {
-	DashboardPort int    `toml:"dashboard_port"`
-	GotenbergURL  string `toml:"gotenberg_url"`
+	DashboardPort     int              `toml:"dashboard_port"`
+	GotenbergURL      string           `toml:"gotenberg_url"`
+	GotenbergRuntime  GotenbergRuntime `toml:"gotenberg_runtime"`
 }
 
 func defaults() Config {
 	return Config{
-		DashboardPort: 8080,
-		GotenbergURL:  "http://localhost:3000",
+		DashboardPort:    8080,
+		GotenbergURL:     "http://localhost:3000",
+		GotenbergRuntime: RuntimeDockerCompose,
 	}
 }
 

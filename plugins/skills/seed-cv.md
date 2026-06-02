@@ -1,11 +1,13 @@
 ---
 name: seed-cv
-description: Use when the user has an existing CV in DOCX format and wants to import it into spicebag as a markdown base CV and a matching CSS theme
+description: Use when the user has an existing CV file (DOCX preferred, PDF fallback) and wants to import it into spicebag as a markdown base CV and a matching CSS theme
 ---
 
-Import an existing DOCX CV into spicebag. Extracts content as markdown and visual styling as a CSS theme.
+Import an existing CV into spicebag. Extracts content as markdown and visual styling as a CSS theme.
 
-Required: path to a `.docx` file in $ARGUMENTS.
+**Prefer DOCX over PDF** — DOCX is structured XML with explicit styles, colors, and table data. PDF is a rendering artifact; heading detection requires heuristics and tables are often lost. If the user provides a PDF and has a DOCX available, ask them to use the DOCX instead. If only PDF is available, proceed with best-effort extraction and warn that results may be less accurate.
+
+Required: path to a `.docx` or `.pdf` file in $ARGUMENTS.
 
 ## Process
 
@@ -23,7 +25,7 @@ Required: path to a `.docx` file in $ARGUMENTS.
    - Page margins / max-width
    - List spacing
    - Translate to CSS in the same structure as spicebag's built-in themes (see below)
-4. Derive a theme name from the DOCX filename (e.g. `my-cv.docx` → `my-cv`)
+4. Derive a theme name from the filename (e.g. `my-cv.docx` → `my-cv`, `my-cv.pdf` → `my-cv`)
 5. Call `write_cv` with filename `base.md` and the extracted markdown content
 6. Write the CSS theme to `~/.config/spicebag/themes/{theme-name}.css`
 7. Report both paths saved
@@ -65,6 +67,7 @@ If the DOCX has no discernible accent color, default to `#1a56db`.
 ## Rules
 
 - Never alter factual content — names, companies, dates, skills must be verbatim
-- If $ARGUMENTS is empty, ask the user for the DOCX path before proceeding
-- If the DOCX uses a font unavailable on the web, pick the closest web-safe or system-stack equivalent
+- If $ARGUMENTS is empty, ask the user for the file path before proceeding
+- If the file is a PDF and a DOCX version exists, ask the user to provide the DOCX for better accuracy
+- If the font is unavailable on the web, pick the closest web-safe or system-stack equivalent
 - Save the CV as `base.md` — this is the master CV that `/customize-cv` and `/apply` build from
