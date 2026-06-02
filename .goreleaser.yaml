@@ -40,10 +40,8 @@ changelog:
       - "^chore[:(]"
       - "^Merge "
 
-homebrew_casks:
+brews:
   - name: spicebag
-    binaries:
-      - spicebag
     repository:
       owner: oxGrad
       name: homebrew-tap
