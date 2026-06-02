@@ -5,5 +5,4 @@ import "github.com/oxGrad/spicebag/internal/assets"
 
 var (
 	themesFS = assets.ThemesFS
-	skillsFS = assets.SkillsFS
 )

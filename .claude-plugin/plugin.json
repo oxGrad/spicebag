@@ -2,7 +2,7 @@
   "name": "spicebag",
   "version": "1.0.0",
   "description": "Spice Bag — Season every application perfectly. CV, cover letter, and job application manager for Claude Code.",
-  "commands": ["./internal/assets/skills/"],
+  "commands": ["./plugins/skills/"],
   "mcpServers": {
     "spicebag": {
       "command": "spicebag",

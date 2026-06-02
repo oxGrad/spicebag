@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+
 func TestThemesEmbedded(t *testing.T) {
 	for _, name := range []string{"minimal.css", "modern.css"} {
 		data, err := fs.ReadFile(assets.ThemesFS, "themes/"+name)
@@ -17,10 +18,3 @@ func TestThemesEmbedded(t *testing.T) {
 	}
 }
 
-func TestSkillsEmbedded(t *testing.T) {
-	for _, name := range []string{"customize-cv.md", "write-cover-letter.md", "apply.md"} {
-		data, err := fs.ReadFile(assets.SkillsFS, "skills/"+name)
-		require.NoError(t, err, "skill %s must be embedded", name)
-		assert.Contains(t, string(data), "name:", "skill %s must have frontmatter", name)
-	}
-}

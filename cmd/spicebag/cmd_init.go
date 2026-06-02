@@ -66,14 +66,6 @@ func runInit(root string, w io.Writer) error {
 		fmt.Fprintln(w, "Extracted default themes to", filepath.Join(root, "themes"))
 	}
 
-	home, _ := os.UserHomeDir()
-	commandsDir := filepath.Join(home, ".claude", "commands", "spicebag")
-	if err := extractEmbedDir(skillsFS, "skills", commandsDir); err != nil {
-		fmt.Fprintf(w, "Warning: could not install skills: %v\n", err)
-	} else {
-		fmt.Fprintln(w, "Installed skills to", commandsDir)
-	}
-
 	composeDest := filepath.Join(root, "docker-compose.yml")
 	if _, err := os.Stat(composeDest); os.IsNotExist(err) {
 		src := filepath.Join(execDir(), "docker-compose.yml")
