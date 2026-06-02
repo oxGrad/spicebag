@@ -5,6 +5,7 @@ before:
   hooks:
     - go mod tidy
     - sh scripts/set-plugin-version.sh {{ .Version }}
+    - bash -c "cd frontend && npm ci && npm run build"
 
 builds:
   - main: ./cmd/spicebag
