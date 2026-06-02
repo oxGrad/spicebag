@@ -1,3 +1,6 @@
+dev: build-frontend-dev build-go
+  ./spicebag start
+
 build-frontend:
   cd frontend && npm ci && npm run build
 
@@ -9,9 +12,6 @@ build: build-frontend
 
 build-go:
   go build -o spicebag ./cmd/spicebag/
-
-dev: build-frontend-dev build-go
-  ./spicebag start
 
 run: build
   ./spicebag start
