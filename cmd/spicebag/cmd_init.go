@@ -3,7 +3,6 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,7 +17,7 @@ import (
 func newInitCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "init",
-		Short: "Set up ~/.config/spicebag and register MCP server with Claude Code",
+		Short: "Set up ~/.config/spicebag with default config, database, and themes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runInit(spicebagRoot(), os.Stdout); err != nil {
 				return err
@@ -90,13 +89,6 @@ func runInit(root string, w io.Writer) error {
 		}
 	}
 
-	if err := registerMCPServer(); err != nil {
-		fmt.Fprintf(w, "Warning: could not register MCP server automatically: %v\n", err)
-		fmt.Fprintln(w, `Add manually to ~/.claude/mcp.json: {"mcpServers":{"spicebag":{"command":"spicebag","args":["mcp"]}}}`)
-	} else {
-		fmt.Fprintln(w, "Registered MCP server with Claude Code.")
-	}
-
 	return nil
 }
 
@@ -113,47 +105,6 @@ func execDir() string {
 	return filepath.Dir(exe)
 }
 
-func registerMCPServer() error {
-	home, _ := os.UserHomeDir()
-	mcpConfigPath := filepath.Join(home, ".claude", "mcp.json")
-
-	var mcpCfg map[string]any
-	data, err := os.ReadFile(mcpConfigPath)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if len(data) > 0 {
-		if err := json.Unmarshal(data, &mcpCfg); err != nil {
-			return err
-		}
-	}
-	if mcpCfg == nil {
-		mcpCfg = map[string]any{}
-	}
-
-	servers, _ := mcpCfg["mcpServers"].(map[string]any)
-	if servers == nil {
-		servers = map[string]any{}
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		exe = "spicebag" // fallback: hope it's on PATH
-	}
-	servers["spicebag"] = map[string]any{
-		"command": exe,
-		"args":    []string{"mcp"},
-	}
-	mcpCfg["mcpServers"] = servers
-
-	out, err := json.MarshalIndent(mcpCfg, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(mcpConfigPath), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(mcpConfigPath, out, 0o644)
-}
 
 func extractEmbedDir(fsys embed.FS, src, dst string) error {
 	if err := os.MkdirAll(dst, 0o755); err != nil {
