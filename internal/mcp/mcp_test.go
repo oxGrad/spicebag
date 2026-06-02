@@ -21,8 +21,8 @@ func setup(t *testing.T) (string, *prospectormcp.Server) {
 	root := t.TempDir()
 
 	// seed test data
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV"))
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager"))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1>"))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p>"))
 	themeDir := filepath.Join(root, "themes")
 	require.NoError(t, os.MkdirAll(themeDir, 0755))
 	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "minimal.css"), []byte("body{}"), 0644))
@@ -38,27 +38,27 @@ func TestListCVsTool(t *testing.T) {
 	_, srv := setup(t)
 	result, err := srv.CallTool(context.Background(), "list_cvs", map[string]any{})
 	require.NoError(t, err)
-	assert.Contains(t, result, "cv-backend-2025-01-01.md")
+	assert.Contains(t, result, "cv-backend-2025-01-01.html")
 }
 
 func TestReadCVTool(t *testing.T) {
 	_, srv := setup(t)
-	result, err := srv.CallTool(context.Background(), "read_cv", map[string]any{"filename": "cv-backend-2025-01-01.md"})
+	result, err := srv.CallTool(context.Background(), "read_cv", map[string]any{"filename": "cv-backend-2025-01-01.html"})
 	require.NoError(t, err)
-	assert.Contains(t, result, "# Backend CV")
+	assert.Contains(t, result, "Backend CV")
 }
 
 func TestWriteCVTool(t *testing.T) {
 	root, srv := setup(t)
 	_, err := srv.CallTool(context.Background(), "write_cv", map[string]any{
-		"filename": "cv-new-2025-06-01.md",
-		"content":  "# New CV",
+		"filename": "cv-new-2025-06-01.html",
+		"content":  "<h1>New CV</h1>",
 	})
 	require.NoError(t, err)
 
-	content, err := fs.ReadCV(root, "cv-new-2025-06-01.md")
+	content, err := fs.ReadCV(root, "cv-new-2025-06-01.html")
 	require.NoError(t, err)
-	assert.Equal(t, "# New CV", content)
+	assert.Equal(t, "<h1>New CV</h1>", content)
 }
 
 func TestListThemesTool(t *testing.T) {

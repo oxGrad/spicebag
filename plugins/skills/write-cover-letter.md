@@ -14,12 +14,26 @@ Write a cover letter for the job post provided in $ARGUMENTS.
 2. Call `list_cvs` to see available base CVs
 3. Select the most relevant CV for this role and call `read_cv` to load it
 4. Call `get_experience_stats` for accurate years of experience per role type
-5. Write a compelling cover letter:
-   - **Opening**: specific to the company and role — never start with "I am writing to apply for"
-   - **Body** (2–3 paragraphs): connect experience directly to stated role requirements; cite specific projects or achievements; use accurate numbers from `get_experience_stats`
+5. Write a compelling cover letter as an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags) using this structure:
+   ```html
+   <header>
+     <h1>Full Name</h1>
+     <div class="contact">email · phone · location · <a href="...">linkedin</a> · <a href="...">github</a></div>
+   </header>
+   <div class="date-block">DD Month YYYY</div>
+   <p class="salutation">Dear [Company] Hiring Team,</p>
+   <p>Body paragraph...</p>
+   <p>Body paragraph...</p>
+   <div class="closing">
+     <div class="sign-off">Sincerely,</div>
+     <div class="name">Full Name</div>
+   </div>
+   ```
+   - **Opening** (`<p class="salutation">` or first body `<p>`): specific to the company and role — never start with "I am writing to apply for"
+   - **Body** (2–3 `<p>` paragraphs): connect experience directly to stated role requirements; cite specific projects or achievements; use accurate numbers from `get_experience_stats`
    - **Closing**: confident, concrete call to action
-6. Generate a filename: `cl-{company}-{YYYY-MM-DD}.md` using today's date (lowercase, spaces as hyphens)
-7. Call `write_cover_letter` with the filename and content
+6. Generate a filename: `cl-{company}-{YYYY-MM-DD}.html` using today's date (lowercase, spaces as hyphens)
+7. Call `write_cover_letter` with the filename and HTML fragment content
 8. Confirm the filename saved
 
 ## Rules

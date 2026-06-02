@@ -43,11 +43,11 @@ func TestRootReturns200(t *testing.T) {
 
 func TestAppsListRoute(t *testing.T) {
 	srv := newTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/apps", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Applications")
+	assert.Contains(t, w.Body.String(), "[")
 }
 
 func TestAppDetailRoute(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAppDetailRoute(t *testing.T) {
 	require.NoError(t, err)
 	store.AddStatusHistory(id, "applied", "")
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/apps/%d", id), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/apps/%d", id), nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -76,7 +76,7 @@ func TestAppStatusUpdate(t *testing.T) {
 	store.AddStatusHistory(id, "applied", "")
 
 	form := strings.NewReader("status=interview&notes=phone+screen")
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/apps/%d/status", id), form)
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/apps/%d/status", id), form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
@@ -87,21 +87,21 @@ func TestAppStatusUpdate(t *testing.T) {
 func TestCVListRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV"))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cv", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/cv", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.md")
+	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.html")
 }
 
 func TestCVViewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.md", "# Backend CV\n\nContent here."))
+	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1><p>Content here.</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cv/cv-backend-2025-01-01.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/cv-backend-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -111,25 +111,25 @@ func TestCVViewRoute(t *testing.T) {
 func TestCLListRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager"))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cl", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/cl", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.md")
+	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.html")
 }
 
 func TestCLViewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
-	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.md", "Dear Hiring Manager\n\nI am excited..."))
+	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p><p>I am excited...</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cl/cl-general-2025-01-01.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cl/cl-general-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Hiring Manager")
+	assert.Contains(t, w.Body.String(), "Dear Hiring Manager")
 }
 
 func TestStatsRoute(t *testing.T) {
@@ -139,25 +139,12 @@ func TestStatsRoute(t *testing.T) {
 		{RoleType: "backend", Company: "Acme", StartDate: "2020-01-01", EndDate: "2022-01-01", SyncedFrom: "cv.md"},
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/stats", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Contains(t, w.Body.String(), "backend")
-}
-
-func TestStatsSyncRoute(t *testing.T) {
-	srv := newTestServer(t)
-	root := srv.Root()
-	// write a CV with frontmatter so sync has something to parse
-	cvContent := "---\nexperience:\n  - role_type: devops\n    company: FooCo\n    start: \"2021-01-01\"\n    end: \"2023-01-01\"\n---\n# CV\n"
-	require.NoError(t, fs.WriteCV(root, "cv-devops-2025-01-01.md", cvContent))
-
-	req := httptest.NewRequest(http.MethodPost, "/stats/sync", nil)
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "devops")
 }
 
 func TestThemesListRoute(t *testing.T) {
@@ -165,7 +152,7 @@ func TestThemesListRoute(t *testing.T) {
 	root := srv.Root()
 	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { font-family: serif; }"), 0o644)
 
-	req := httptest.NewRequest(http.MethodGet, "/themes", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -176,13 +163,13 @@ func TestThemePreviewRoute(t *testing.T) {
 	srv := newTestServer(t)
 	root := srv.Root()
 	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0o644)
-	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello World"))
+	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello World</h1>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/cv-test.html?theme=minimal", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Hello World")
+	assert.Contains(t, w.Body.String(), "body { color: red; }")
 }
 
 func TestThemeUploadRoute(t *testing.T) {
@@ -194,11 +181,11 @@ func TestThemeUploadRoute(t *testing.T) {
 	fw.Write([]byte("body { background: blue; }"))
 	mw.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/themes/upload", &buf)
+	req := httptest.NewRequest(http.MethodPost, "/api/themes/upload", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusSeeOther, w.Code)
+	assert.Equal(t, http.StatusCreated, w.Code)
 }
 
 func TestExportRoute(t *testing.T) {
@@ -218,10 +205,10 @@ func TestExportRoute(t *testing.T) {
 	cfg := config.Config{GotenbergURL: gotenberg.URL}
 	srv := dashboard.NewServer(root, store, cfg)
 
-	require.NoError(t, fs.WriteCV(root, "cv-test.md", "# Hello"))
+	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello</h1>"))
 
-	form := strings.NewReader("file_path=cv%2Fcv-test.md&theme=")
-	req := httptest.NewRequest(http.MethodPost, "/export", form)
+	form := strings.NewReader("file_path=cv%2Fcv-test.html&theme=")
+	req := httptest.NewRequest(http.MethodPost, "/api/export", form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
@@ -246,14 +233,12 @@ func TestGotenbergStatusRunning(t *testing.T) {
 	}
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
 
-	req := httptest.NewRequest(http.MethodGet, "/gotenberg/status?file_path=cv%2Ftest.md&theme=", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg running")
-	assert.Contains(t, w.Body.String(), "Export PDF")
-	// export button must NOT be disabled when running
-	assert.NotContains(t, w.Body.String(), `disabled`)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":true`)
 }
 
 func TestGotenbergStatusStopped(t *testing.T) {
@@ -267,13 +252,12 @@ func TestGotenbergStatusStopped(t *testing.T) {
 	// point at a port with nothing listening
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
 
-	req := httptest.NewRequest(http.MethodGet, "/gotenberg/status?file_path=cv%2Ftest.md&theme=", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
-	assert.Contains(t, w.Body.String(), `disabled`)
-	assert.Contains(t, w.Body.String(), "Start Gotenberg to export PDF")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":false`)
 }
 
 func TestGotenbergStart(t *testing.T) {
@@ -294,14 +278,12 @@ func TestGotenbergStart(t *testing.T) {
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
 	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil }) // no-op: skip docker
 
-	form := strings.NewReader("file_path=cv%2Ftest.md&theme=minimal")
-	req := httptest.NewRequest(http.MethodPost, "/gotenberg/start", form)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/start", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg running")
-	assert.NotContains(t, w.Body.String(), "disabled")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":true`)
 }
 
 func TestGotenbergStop(t *testing.T) {
@@ -316,12 +298,143 @@ func TestGotenbergStop(t *testing.T) {
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
 	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil })
 
-	form := strings.NewReader("file_path=cover-letters%2Fcl.md&theme=")
-	req := httptest.NewRequest(http.MethodPost, "/gotenberg/stop", form)
+	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/stop", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), `"running":false`)
+}
+
+func TestAPIStatsReturnsJSON(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+}
+
+func TestAPIGotenbergStatus(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "running")
+}
+
+func TestRenderCV(t *testing.T) {
+	srv := newTestServer(t)
+	fragment := "<h1>Gatra Raditya</h1><p>Engineer</p>"
+	require.NoError(t, fs.WriteCV(srv.Root(), "base.html", fragment))
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/base.html", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "<h1>Gatra Raditya</h1>")
+	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}
+
+func TestRenderCVWithTheme(t *testing.T) {
+	srv := newTestServer(t)
+	require.NoError(t, fs.WriteCV(srv.Root(), "base.html", "<h1>Test</h1>"))
+	os.WriteFile(filepath.Join(srv.Root(), "themes", "minimal.css"), []byte("body{color:red}"), 0644)
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/base.html?theme=minimal", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "body{color:red}")
+}
+
+func TestRenderCL(t *testing.T) {
+	srv := newTestServer(t)
+	fragment := "<p>Dear Hiring Team,</p>"
+	require.NoError(t, fs.WriteCoverLetter(srv.Root(), "cl.html", fragment))
+
+	req := httptest.NewRequest(http.MethodGet, "/render/cl/cl.html", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "<p>Dear Hiring Team,</p>")
+	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}
+
+func TestAPICVList(t *testing.T) {
+	srv := newTestServer(t)
+	fs.WriteCV(srv.Root(), "base.html", "<h1>Test</h1>")
+	req := httptest.NewRequest(http.MethodGet, "/api/cv", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "base.html")
+}
+
+func TestAPICLList(t *testing.T) {
+	srv := newTestServer(t)
+	fs.WriteCoverLetter(srv.Root(), "cl.html", "<p>Dear</p>")
+	req := httptest.NewRequest(http.MethodGet, "/api/cl", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "cl.html")
+}
+
+func TestAPIThemesList(t *testing.T) {
+	srv := newTestServer(t)
+	os.WriteFile(filepath.Join(srv.Root(), "themes", "minimal.css"), []byte("body{}"), 0644)
+	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "minimal")
+}
+
+func TestAPIAppsList(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/apps", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "[")
+}
+
+func TestAPIAppDetail(t *testing.T) {
+	srv := newTestServer(t)
+	id, _ := srv.Store().UpsertApplication(db.Application{
+		Company: "Stripe", Role: "SRE", AppliedDate: "2025-01-01", FolderPath: "stripe/sre",
+	})
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/apps/%d", id), nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "Stripe")
+}
+
+func TestAPIAppStatusUpdate(t *testing.T) {
+	srv := newTestServer(t)
+	id, _ := srv.Store().UpsertApplication(db.Application{
+		Company: "X", Role: "Y", AppliedDate: "2025-01-01", FolderPath: "x/y",
+	})
+	srv.Store().AddStatusHistory(id, "applied", "")
+
+	form := strings.NewReader("status=interview&notes=phone+screen")
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/apps/%d/status", id), form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Gotenberg stopped")
-	assert.Contains(t, w.Body.String(), "disabled")
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "interview")
 }

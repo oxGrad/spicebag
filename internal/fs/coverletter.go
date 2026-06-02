@@ -10,7 +10,7 @@ import (
 func coverLetterDir(root string) string { return filepath.Join(root, "cover-letters") }
 
 func ListCoverLetters(root string) ([]FileInfo, error) {
-	return listMarkdownFiles(coverLetterDir(root))
+	return listHTMLFiles(coverLetterDir(root))
 }
 
 func ReadCoverLetter(root, filename string) (string, error) {

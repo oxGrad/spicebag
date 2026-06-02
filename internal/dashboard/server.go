@@ -4,8 +4,7 @@ package dashboard
 import (
 	"embed"
 	"fmt"
-	"html/template"
-	"log"
+	"io/fs"
 	"net/http"
 	"strings"
 
@@ -13,8 +12,8 @@ import (
 	"github.com/oxGrad/spicebag/internal/db"
 )
 
-//go:embed templates
-var templateFS embed.FS
+//go:embed ui
+var uiFS embed.FS
 
 // Server holds all dependencies and the HTTP mux.
 type Server struct {
@@ -59,54 +58,26 @@ func (s *Server) Root() string { return s.root }
 
 // routes registers all URL patterns.
 func (s *Server) routes() {
-	s.mux.HandleFunc("GET /", s.handleAppsList)
-	s.mux.HandleFunc("GET /apps/{id}", s.handleAppDetail)
-	s.mux.HandleFunc("POST /apps/{id}/status", s.handleAppStatusUpdate)
+	s.mux.HandleFunc("GET /render/cv/{name}", s.handleRenderCV)
+	s.mux.HandleFunc("GET /render/cl/{name}", s.handleRenderCL)
 
-	s.mux.HandleFunc("GET /cv", s.handleCVList)
-	s.mux.HandleFunc("GET /cv/{name}", s.handleCVView)
+	s.mux.HandleFunc("GET /api/apps", s.handleAPIAppsList)
+	s.mux.HandleFunc("GET /api/apps/{id}", s.handleAPIAppDetail)
+	s.mux.HandleFunc("POST /api/apps/{id}/status", s.handleAPIAppStatusUpdate)
 
-	s.mux.HandleFunc("GET /cl", s.handleCLList)
-	s.mux.HandleFunc("GET /cl/{name}", s.handleCLView)
+	s.mux.HandleFunc("GET /api/cv", s.handleAPICVList)
+	s.mux.HandleFunc("GET /api/cl", s.handleAPICLList)
+	s.mux.HandleFunc("GET /api/themes", s.handleAPIThemesList)
+	s.mux.HandleFunc("POST /api/themes/upload", s.handleThemeUpload)
+	s.mux.HandleFunc("POST /api/export", s.handleExport)
 
-	s.mux.HandleFunc("POST /export", s.handleExport)
+	s.mux.HandleFunc("GET /api/stats", s.handleAPIStats)
 
-	s.mux.HandleFunc("GET /stats", s.handleStats)
-	s.mux.HandleFunc("POST /stats/sync", s.handleStatsSync)
+	s.mux.HandleFunc("GET /api/gotenberg/status", s.handleAPIGotenbergStatus)
+	s.mux.HandleFunc("POST /api/gotenberg/start", s.handleAPIGotenbergStart)
+	s.mux.HandleFunc("POST /api/gotenberg/stop", s.handleAPIGotenbergStop)
 
-	s.mux.HandleFunc("GET /themes", s.handleThemesList)
-	s.mux.HandleFunc("GET /themes/{name}/preview", s.handleThemePreview)
-	s.mux.HandleFunc("POST /themes/upload", s.handleThemeUpload)
-
-	s.mux.HandleFunc("GET /gotenberg/status", s.handleGotenbergStatus)
-	s.mux.HandleFunc("POST /gotenberg/start", s.handleGotenbergStart)
-	s.mux.HandleFunc("POST /gotenberg/stop", s.handleGotenbergStop)
-}
-
-// render parses layout.html + the named page template and executes "layout".
-func (s *Server) render(w http.ResponseWriter, page string, data any) {
-	t, err := template.ParseFS(templateFS, "templates/layout.html", "templates/"+page)
-	if err != nil {
-		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := t.ExecuteTemplate(w, "layout", data); err != nil {
-		log.Printf("render %s: %v", page, err)
-	}
-}
-
-// renderPartial parses a single partial template file and executes the named template within it.
-func (s *Server) renderPartial(w http.ResponseWriter, partial, name string, data any) {
-	t, err := template.ParseFS(templateFS, "templates/"+partial)
-	if err != nil {
-		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := t.ExecuteTemplate(w, name, data); err != nil {
-		log.Printf("renderPartial %s: %v", partial, err)
-	}
+	s.mux.HandleFunc("/", s.handleSPA)
 }
 
 // parseID extracts an integer path parameter from the URL using Go 1.22 PathValue.
@@ -122,16 +93,35 @@ func parseID(r *http.Request, param string) (int64, bool) {
 	return id, true
 }
 
-// statusBadgeClass returns a Tailwind class string for a given status value.
-func statusBadgeClass(status string) string {
-	switch strings.ToLower(status) {
-	case "offer":
-		return "bg-green-100 text-green-800"
-	case "interview", "assessment":
-		return "bg-yellow-100 text-yellow-800"
-	case "rejected", "withdrawn", "ghosted":
-		return "bg-red-100 text-red-800"
-	default:
-		return "bg-blue-100 text-blue-800"
+// handleSPA serves the embedded Vue SPA, falling back to index.html for
+// client-side routes (anything that is not a real file in the ui directory).
+func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
+	sub, err := fs.Sub(uiFS, "ui")
+	if err != nil {
+		http.Error(w, "ui filesystem error", http.StatusInternalServerError)
+		return
 	}
+	// Try serving the exact path as a static file
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	if path == "" {
+		path = "."
+	}
+	f, err := sub.Open(path)
+	if err == nil {
+		fi, sterr := f.Stat()
+		f.Close()
+		if sterr == nil && !fi.IsDir() {
+			http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+			return
+		}
+	}
+	// SPA fallback — serve index.html for all unmatched routes
+	data, err := fs.ReadFile(sub, "index.html")
+	if err != nil {
+		http.Error(w, "dashboard not built: run 'just build-frontend'", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
 }
+

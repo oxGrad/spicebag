@@ -18,7 +18,7 @@ type FileInfo struct {
 func cvDir(root string) string { return filepath.Join(root, "cv") }
 
 func ListCVs(root string) ([]FileInfo, error) {
-	return listMarkdownFiles(cvDir(root))
+	return listHTMLFiles(cvDir(root))
 }
 
 func ReadCV(root, filename string) (string, error) {
@@ -39,7 +39,7 @@ func WriteCV(root, filename, content string) error {
 	return os.WriteFile(filepath.Join(dir, filename), []byte(content), 0644)
 }
 
-func listMarkdownFiles(dir string) ([]FileInfo, error) {
+func listHTMLFiles(dir string) ([]FileInfo, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
@@ -49,12 +49,11 @@ func listMarkdownFiles(dir string) ([]FileInfo, error) {
 	}
 	var files []FileInfo
 	for _, e := range entries {
-		if e.IsDir() || filepath.Ext(e.Name()) != ".md" {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".html" {
 			continue
 		}
 		info, err := e.Info()
 		if err != nil {
-			// file was deleted between ReadDir and Info; skip it
 			continue
 		}
 		files = append(files, FileInfo{Name: e.Name(), ModifiedAt: info.ModTime(), Size: info.Size()})

@@ -15,13 +15,19 @@ Tailor a base CV for the job post or role type provided in $ARGUMENTS.
    - If it starts with `@` it is a file reference — read that file
    - If it starts with `http` it is a URL — fetch the content
    - Otherwise treat it as a free-text role description
-6. Rewrite the CV to emphasize skills relevant to this role:
+6. Rewrite the CV as an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags) using the standard CV structure:
+   - `<h1>` for the person's name
+   - `<p class="cv-contact">` for the contact line
+   - `<h2>` for section headings (Experience, Education, Skills)
+   - `<div class="cv-entry">` wrapping each job/education entry
+   - `<div class="cv-entry-header">` containing `<h3>` (job title), `<span class="cv-company">`, `<span class="cv-dates">`
+   - `<ul>/<li>` for bullet points
    - Keep all factual data accurate: companies, dates, actual tools used
    - Adjust wording, bullet point emphasis, and section ordering
    - Update the summary/objective section to match the target role
    - Use exact years from `get_experience_stats` — never guess or round
-7. Generate a filename: `cv-{role-type}-{YYYY-MM-DD}.md` using today's date
-8. Call `write_cv` with the new filename and tailored content
+7. Generate a filename: `cv-{role-type}-{YYYY-MM-DD}.html` using today's date
+8. Call `write_cv` with the new filename and tailored HTML fragment content
 9. Confirm the filename saved and summarize the key changes made
 
 ## Rules
