@@ -16,6 +16,9 @@ import (
 //go:embed templates
 var templateFS embed.FS
 
+//go:embed ui
+var uiFS embed.FS
+
 // Server holds all dependencies and the HTTP mux.
 type Server struct {
 	root            string
@@ -120,6 +123,21 @@ func parseID(r *http.Request, param string) (int64, bool) {
 		return 0, false
 	}
 	return id, true
+}
+
+// handleSPA serves the embedded Vue SPA, falling back to index.html for
+// client-side routes (anything that is not a real file in the ui directory).
+func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
+	path := "ui" + r.URL.Path
+	f, err := uiFS.Open(path)
+	if err == nil {
+		f.Close()
+		http.FileServer(http.FS(uiFS)).ServeHTTP(w, r)
+		return
+	}
+	data, _ := uiFS.ReadFile("ui/index.html")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
 }
 
 // statusBadgeClass returns a Tailwind class string for a given status value.

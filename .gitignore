@@ -1,3 +1,5 @@
 .superpowers/
 coverage.*
 /spicebag
+internal/dashboard/ui/
+frontend/node_modules/
