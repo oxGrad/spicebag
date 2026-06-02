@@ -17,7 +17,7 @@ type gotenbergStatusJSON struct {
 	Err     string `json:"error,omitempty"`
 }
 
-const gotenbergImage     = "gotenberg/gotenberg:8"
+const gotenbergImage     = "docker.io/gotenberg/gotenberg:8"
 const gotenbergContainer = "spicebag-gotenberg"
 
 func (s *Server) checkGotenberg() bool {
