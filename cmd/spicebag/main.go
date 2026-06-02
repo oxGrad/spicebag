@@ -17,7 +17,6 @@ func main() {
 	root.AddCommand(
 		newInitCmd(),
 		newMCPCmd(),
-		newSyncCmd(),
 		newStartCmd(),
 		newStopCmd(),
 	)
