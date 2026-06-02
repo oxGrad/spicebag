@@ -4,16 +4,11 @@ package dashboard
 import (
 	"embed"
 	"fmt"
-	"html/template"
-	"log"
 	"net/http"
 
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/db"
 )
-
-//go:embed templates
-var templateFS embed.FS
 
 //go:embed ui
 var uiFS embed.FS
@@ -81,32 +76,6 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/gotenberg/stop", s.handleAPIGotenbergStop)
 
 	s.mux.HandleFunc("/", s.handleSPA)
-}
-
-// render parses layout.html + the named page template and executes "layout".
-func (s *Server) render(w http.ResponseWriter, page string, data any) {
-	t, err := template.ParseFS(templateFS, "templates/layout.html", "templates/"+page)
-	if err != nil {
-		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := t.ExecuteTemplate(w, "layout", data); err != nil {
-		log.Printf("render %s: %v", page, err)
-	}
-}
-
-// renderPartial parses a single partial template file and executes the named template within it.
-func (s *Server) renderPartial(w http.ResponseWriter, partial, name string, data any) {
-	t, err := template.ParseFS(templateFS, "templates/"+partial)
-	if err != nil {
-		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := t.ExecuteTemplate(w, name, data); err != nil {
-		log.Printf("renderPartial %s: %v", partial, err)
-	}
 }
 
 // parseID extracts an integer path parameter from the URL using Go 1.22 PathValue.
