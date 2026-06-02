@@ -68,20 +68,14 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/apps/{id}", s.handleAPIAppDetail)
 	s.mux.HandleFunc("POST /api/apps/{id}/status", s.handleAPIAppStatusUpdate)
 
-	s.mux.HandleFunc("GET /cv", s.handleCVList)
-	s.mux.HandleFunc("GET /cv/{name}", s.handleCVView)
-
-	s.mux.HandleFunc("GET /cl", s.handleCLList)
-	s.mux.HandleFunc("GET /cl/{name}", s.handleCLView)
-
-	s.mux.HandleFunc("POST /export", s.handleExport)
+	s.mux.HandleFunc("GET /api/cv", s.handleAPICVList)
+	s.mux.HandleFunc("GET /api/cl", s.handleAPICLList)
+	s.mux.HandleFunc("GET /api/themes", s.handleAPIThemesList)
+	s.mux.HandleFunc("POST /api/themes/upload", s.handleThemeUpload)
+	s.mux.HandleFunc("POST /api/export", s.handleExport)
 
 	s.mux.HandleFunc("GET /stats", s.handleStats)
 	s.mux.HandleFunc("POST /stats/sync", s.handleStatsSync)
-
-	s.mux.HandleFunc("GET /themes", s.handleThemesList)
-	s.mux.HandleFunc("GET /themes/{name}/preview", s.handleThemePreview)
-	s.mux.HandleFunc("POST /themes/upload", s.handleThemeUpload)
 
 	s.mux.HandleFunc("GET /gotenberg/status", s.handleGotenbergStatus)
 	s.mux.HandleFunc("POST /gotenberg/start", s.handleGotenbergStart)

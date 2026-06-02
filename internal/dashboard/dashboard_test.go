@@ -89,7 +89,7 @@ func TestCVListRoute(t *testing.T) {
 	root := srv.Root()
 	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cv", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/cv", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -101,11 +101,11 @@ func TestCVViewRoute(t *testing.T) {
 	root := srv.Root()
 	require.NoError(t, fs.WriteCV(root, "cv-backend-2025-01-01.html", "<h1>Backend CV</h1><p>Content here.</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cv/cv-backend-2025-01-01.html", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/cv-backend-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cv-backend-2025-01-01.html")
+	assert.Contains(t, w.Body.String(), "Backend CV")
 }
 
 func TestCLListRoute(t *testing.T) {
@@ -113,7 +113,7 @@ func TestCLListRoute(t *testing.T) {
 	root := srv.Root()
 	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cl", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/cl", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -125,11 +125,11 @@ func TestCLViewRoute(t *testing.T) {
 	root := srv.Root()
 	require.NoError(t, fs.WriteCoverLetter(root, "cl-general-2025-01-01.html", "<p>Dear Hiring Manager</p><p>I am excited...</p>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/cl/cl-general-2025-01-01.html", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cl/cl-general-2025-01-01.html", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cl-general-2025-01-01.html")
+	assert.Contains(t, w.Body.String(), "Dear Hiring Manager")
 }
 
 func TestStatsRoute(t *testing.T) {
@@ -165,7 +165,7 @@ func TestThemesListRoute(t *testing.T) {
 	root := srv.Root()
 	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { font-family: serif; }"), 0o644)
 
-	req := httptest.NewRequest(http.MethodGet, "/themes", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -178,11 +178,11 @@ func TestThemePreviewRoute(t *testing.T) {
 	os.WriteFile(filepath.Join(root, "themes", "minimal.css"), []byte("body { color: red; }"), 0o644)
 	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello World</h1>"))
 
-	req := httptest.NewRequest(http.MethodGet, "/themes/minimal/preview?cv=cv-test.html", nil)
+	req := httptest.NewRequest(http.MethodGet, "/render/cv/cv-test.html?theme=minimal", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "minimal")
+	assert.Contains(t, w.Body.String(), "body { color: red; }")
 }
 
 func TestThemeUploadRoute(t *testing.T) {
@@ -194,7 +194,7 @@ func TestThemeUploadRoute(t *testing.T) {
 	fw.Write([]byte("body { background: blue; }"))
 	mw.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/themes/upload", &buf)
+	req := httptest.NewRequest(http.MethodPost, "/api/themes/upload", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
@@ -221,7 +221,7 @@ func TestExportRoute(t *testing.T) {
 	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello</h1>"))
 
 	form := strings.NewReader("file_path=cv%2Fcv-test.html&theme=")
-	req := httptest.NewRequest(http.MethodPost, "/export", form)
+	req := httptest.NewRequest(http.MethodPost, "/api/export", form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
@@ -365,6 +365,39 @@ func TestRenderCL(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "<p>Dear Hiring Team,</p>")
 	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}
+
+func TestAPICVList(t *testing.T) {
+	srv := newTestServer(t)
+	fs.WriteCV(srv.Root(), "base.html", "<h1>Test</h1>")
+	req := httptest.NewRequest(http.MethodGet, "/api/cv", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "base.html")
+}
+
+func TestAPICLList(t *testing.T) {
+	srv := newTestServer(t)
+	fs.WriteCoverLetter(srv.Root(), "cl.html", "<p>Dear</p>")
+	req := httptest.NewRequest(http.MethodGet, "/api/cl", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "cl.html")
+}
+
+func TestAPIThemesList(t *testing.T) {
+	srv := newTestServer(t)
+	os.WriteFile(filepath.Join(srv.Root(), "themes", "minimal.css"), []byte("body{}"), 0644)
+	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "minimal")
 }
 
 func TestAPIAppsList(t *testing.T) {

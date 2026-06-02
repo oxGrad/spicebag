@@ -3,7 +3,6 @@ package dashboard
 
 import (
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -14,42 +13,12 @@ import (
 	"github.com/oxGrad/spicebag/internal/pdf"
 )
 
-type themesPageData struct {
-	Themes         []string
-	PreviewTheme   string
-	PreviewStyle   template.HTML
-	PreviewContent template.HTML
-}
-
-func (s *Server) handleThemesList(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleAPIThemesList(w http.ResponseWriter, r *http.Request) {
 	themes, _ := fs.ListThemes(s.root)
-	s.render(w, "themes.html", themesPageData{Themes: themes})
-}
-
-func (s *Server) handleThemePreview(w http.ResponseWriter, r *http.Request) {
-	name := r.PathValue("name")
-	css, err := fs.ReadTheme(s.root, name)
-	if err != nil {
-		http.NotFound(w, r)
-		return
+	if themes == nil {
+		themes = []string{}
 	}
-
-	// render preview with the first available CV, or sample text
-	previewMD := "# Sample Heading\n\nThis is how your theme looks with **bold**, *italic*, and regular text.\n\n## Section\n\nMore content here."
-	cvParam := r.URL.Query().Get("cv")
-	if cvParam != "" {
-		if content, err := fs.ReadCV(s.root, cvParam); err == nil {
-			previewMD = content
-		}
-	}
-
-	themes, _ := fs.ListThemes(s.root)
-	s.render(w, "themes.html", themesPageData{
-		Themes:         themes,
-		PreviewTheme:   name,
-		PreviewStyle:   template.HTML("<style>" + strings.ReplaceAll(css, "</style>", `<\/style>`) + "</style>"),
-		PreviewContent: RenderMarkdown(previewMD),
-	})
+	writeJSON(w, themes)
 }
 
 func (s *Server) handleThemeUpload(w http.ResponseWriter, r *http.Request) {
