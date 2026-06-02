@@ -14,6 +14,7 @@ import (
 
 type gotenbergStatusJSON struct {
 	Running bool   `json:"running"`
+	Pulling bool   `json:"pulling,omitempty"`
 	Err     string `json:"error,omitempty"`
 }
 
@@ -30,17 +31,6 @@ func (s *Server) checkGotenberg() bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-func (s *Server) waitForGotenberg(maxAttempts int) bool {
-	for i := range maxAttempts {
-		if s.checkGotenberg() {
-			return true
-		}
-		if i < maxAttempts-1 {
-			time.Sleep(time.Second)
-		}
-	}
-	return false
-}
 
 func runCmd(binary string, args ...string) error {
 	var stderr bytes.Buffer
@@ -107,15 +97,26 @@ func (s *Server) handleAPIGotenbergStatus(w http.ResponseWriter, r *http.Request
 	writeJSON(w, gotenbergStatusJSON{Running: s.checkGotenberg()})
 }
 
-func (s *Server) handleAPIGotenbergStart(w http.ResponseWriter, r *http.Request) {
-	resp := gotenbergStatusJSON{}
-	if err := s.startGotenberg(); err != nil {
-		resp.Err = err.Error()
-		resp.Running = s.checkGotenberg()
-	} else {
-		resp.Running = s.waitForGotenberg(5)
+// imageNeedsPull returns true if the Gotenberg image is not yet present locally.
+// Only checked for direct docker/podman runtimes; compose mode returns false.
+func (s *Server) imageNeedsPull() bool {
+	switch s.cfg.GotenbergRuntime {
+	case "docker":
+		return runCmd("docker", "image", "inspect", "--format", "{{.Id}}", gotenbergImage) != nil
+	case "podman", "":
+		return runCmd("podman", "image", "exists", gotenbergImage) != nil
+	default:
+		return false
 	}
-	writeJSON(w, resp)
+}
+
+func (s *Server) handleAPIGotenbergStart(w http.ResponseWriter, r *http.Request) {
+	// Check before starting so the UI can show a "pulling" message.
+	pulling := s.imageNeedsPull()
+	// Run in background — image pull can block for minutes on first run.
+	// Client polls /api/gotenberg/status until running.
+	go s.startGotenberg() //nolint:errcheck
+	writeJSON(w, gotenbergStatusJSON{Running: s.checkGotenberg(), Pulling: pulling})
 }
 
 func (s *Server) handleAPIGotenbergStop(w http.ResponseWriter, r *http.Request) {

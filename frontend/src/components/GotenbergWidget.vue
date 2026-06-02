@@ -6,7 +6,7 @@
       :disabled="starting"
       class="border rounded px-3 py-1.5 text-sm bg-white hover:bg-gray-50 disabled:opacity-50"
     >
-      {{ starting ? "Starting…" : "Start Gotenberg" }}
+      {{ pulling ? "Pulling image…" : starting ? "Starting…" : "Start Gotenberg" }}
     </button>
     <button
       v-if="running"
@@ -22,6 +22,7 @@
     >
       Stop
     </button>
+    <span v-if="pulling && starting" class="text-xs text-gray-400">First run — may take a few minutes</span>
     <span v-if="err" class="text-xs text-red-500">{{ err }}</span>
   </div>
 </template>
@@ -37,6 +38,7 @@ const props = defineProps({
 
 const running = ref(false);
 const starting = ref(false);
+const pulling = ref(false);
 const err = ref("");
 
 onMounted(async () => {
@@ -49,11 +51,22 @@ async function start() {
   err.value = "";
   try {
     const s = await api.gotenberg.start();
-    running.value = s.running;
-    if (s.error) err.value = s.error;
+    pulling.value = s.pulling ?? false;
   } catch (e) {
     err.value = e.message;
+    starting.value = false;
+    return;
   }
+  // Poll until running or timeout (2 minutes) — image pull can be slow
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const s = await api.gotenberg.status();
+      if (s.running) { running.value = true; break; }
+    } catch (_) { /* keep polling */ }
+  }
+  pulling.value = false;
   starting.value = false;
 }
 
