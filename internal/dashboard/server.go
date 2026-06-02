@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/db"
@@ -65,9 +64,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /render/cv/{name}", s.handleRenderCV)
 	s.mux.HandleFunc("GET /render/cl/{name}", s.handleRenderCL)
 
-	s.mux.HandleFunc("GET /", s.handleAppsList)
-	s.mux.HandleFunc("GET /apps/{id}", s.handleAppDetail)
-	s.mux.HandleFunc("POST /apps/{id}/status", s.handleAppStatusUpdate)
+	s.mux.HandleFunc("GET /api/apps", s.handleAPIAppsList)
+	s.mux.HandleFunc("GET /api/apps/{id}", s.handleAPIAppDetail)
+	s.mux.HandleFunc("POST /api/apps/{id}/status", s.handleAPIAppStatusUpdate)
 
 	s.mux.HandleFunc("GET /cv", s.handleCVList)
 	s.mux.HandleFunc("GET /cv/{name}", s.handleCVView)
@@ -87,6 +86,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /gotenberg/status", s.handleGotenbergStatus)
 	s.mux.HandleFunc("POST /gotenberg/start", s.handleGotenbergStart)
 	s.mux.HandleFunc("POST /gotenberg/stop", s.handleGotenbergStop)
+
+	s.mux.HandleFunc("/", s.handleSPA)
 }
 
 // render parses layout.html + the named page template and executes "layout".
@@ -150,16 +151,3 @@ func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-// statusBadgeClass returns a Tailwind class string for a given status value.
-func statusBadgeClass(status string) string {
-	switch strings.ToLower(status) {
-	case "offer":
-		return "bg-green-100 text-green-800"
-	case "interview", "assessment":
-		return "bg-yellow-100 text-yellow-800"
-	case "rejected", "withdrawn", "ghosted":
-		return "bg-red-100 text-red-800"
-	default:
-		return "bg-blue-100 text-blue-800"
-	}
-}

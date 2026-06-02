@@ -43,11 +43,11 @@ func TestRootReturns200(t *testing.T) {
 
 func TestAppsListRoute(t *testing.T) {
 	srv := newTestServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/apps", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Applications")
+	assert.Contains(t, w.Body.String(), "[")
 }
 
 func TestAppDetailRoute(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAppDetailRoute(t *testing.T) {
 	require.NoError(t, err)
 	store.AddStatusHistory(id, "applied", "")
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/apps/%d", id), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/apps/%d", id), nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -76,7 +76,7 @@ func TestAppStatusUpdate(t *testing.T) {
 	store.AddStatusHistory(id, "applied", "")
 
 	form := strings.NewReader("status=interview&notes=phone+screen")
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/apps/%d/status", id), form)
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/apps/%d/status", id), form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
@@ -365,4 +365,44 @@ func TestRenderCL(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "<p>Dear Hiring Team,</p>")
 	assert.Contains(t, w.Body.String(), "<!DOCTYPE html>")
+}
+
+func TestAPIAppsList(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/apps", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "[")
+}
+
+func TestAPIAppDetail(t *testing.T) {
+	srv := newTestServer(t)
+	id, _ := srv.Store().UpsertApplication(db.Application{
+		Company: "Stripe", Role: "SRE", AppliedDate: "2025-01-01", FolderPath: "stripe/sre",
+	})
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/apps/%d", id), nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "Stripe")
+}
+
+func TestAPIAppStatusUpdate(t *testing.T) {
+	srv := newTestServer(t)
+	id, _ := srv.Store().UpsertApplication(db.Application{
+		Company: "X", Role: "Y", AppliedDate: "2025-01-01", FolderPath: "x/y",
+	})
+	srv.Store().AddStatusHistory(id, "applied", "")
+
+	form := strings.NewReader("status=interview&notes=phone+screen")
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/apps/%d/status", id), form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Contains(t, w.Body.String(), "interview")
 }
