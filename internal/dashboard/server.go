@@ -131,11 +131,18 @@ func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
 	path := "ui" + r.URL.Path
 	f, err := uiFS.Open(path)
 	if err == nil {
+		fi, sterr := f.Stat()
 		f.Close()
-		http.FileServer(http.FS(uiFS)).ServeHTTP(w, r)
+		if sterr == nil && !fi.IsDir() {
+			http.FileServer(http.FS(uiFS)).ServeHTTP(w, r)
+			return
+		}
+	}
+	data, err := uiFS.ReadFile("ui/index.html")
+	if err != nil {
+		http.Error(w, "dashboard not built: run 'just build-frontend'", http.StatusInternalServerError)
 		return
 	}
-	data, _ := uiFS.ReadFile("ui/index.html")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(data)
 }
