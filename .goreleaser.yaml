@@ -40,12 +40,13 @@ changelog:
       - "^chore[:(]"
       - "^Merge "
 
-homebrew:
+homebrew_casks:
   - name: spicebag
+    binaries:
+      - spicebag
     repository:
       owner: oxGrad
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: "https://github.com/oxGrad/spicebag"
     description: "Season every application perfectly — CV and cover letter manager for Claude Code"
-    license: MIT
