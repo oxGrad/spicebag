@@ -139,3 +139,4 @@ Call `create_application` with:
 - CV facts must be accurate; only emphasis and wording may be adjusted
 - Cover letter body must reference specific verified experiences, not generic claims
 - If the user skips a question, omit that specific claim from the output entirely
+- Never use em dashes (—) in generated CV or cover letter content; use a comma, colon, or rewrite the sentence instead

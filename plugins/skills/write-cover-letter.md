@@ -42,3 +42,4 @@ Write a cover letter for the job post provided in $ARGUMENTS.
 - Target length: under 350 words (approximately one page)
 - Address specific requirements from the job post, not generic ones
 - If company name cannot be determined from the post, ask before saving
+- Never use em dashes (—) in generated cover letter content; use a comma, colon, or rewrite the sentence instead

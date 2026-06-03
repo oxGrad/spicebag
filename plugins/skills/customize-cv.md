@@ -37,3 +37,4 @@ Tailor a base CV for the job post or role type provided in $ARGUMENTS.
 - Never alter factual data (companies, dates, actual skills used)
 - Always use `get_experience_stats` for total years of experience: do not compute from CV text
 - If $ARGUMENTS is empty, ask the user for the target role type before proceeding
+- Never use em dashes (—) in generated CV content; use a comma, colon, or rewrite the sentence instead
