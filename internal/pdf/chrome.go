@@ -44,14 +44,17 @@ func renderWithChrome(html, css string) ([]byte, error) {
 		return nil, fmt.Errorf("wait load: %w", err)
 	}
 
-	zero := 0.0
+	// 15mm margins on each side — consistent across all pages.
+	// Body padding is stripped via @media print in the CSS theme,
+	// so this value is the sole source of page margin in the PDF.
+	margin := 0.59 // inches ≈ 15mm
 	reader, err := page.PDF(&proto.PagePrintToPDF{
 		PrintBackground:     true,
 		DisplayHeaderFooter: false,
-		MarginTop:           &zero,
-		MarginBottom:        &zero,
-		MarginLeft:          &zero,
-		MarginRight:         &zero,
+		MarginTop:           &margin,
+		MarginBottom:        &margin,
+		MarginLeft:          &margin,
+		MarginRight:         &margin,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("print PDF: %w", err)

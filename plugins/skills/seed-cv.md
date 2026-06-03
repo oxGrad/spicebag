@@ -91,6 +91,7 @@ h2 {
 }
 /* A4 PDF page-break control */
 @page { size: A4; }
+@media print { body { padding: 0; } }
 .cv-entry { margin-bottom: 12px; page-break-inside: avoid; }
 h2 { page-break-after: avoid; }
 .cv-entry-header {
