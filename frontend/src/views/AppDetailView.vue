@@ -229,38 +229,41 @@
 
         <!-- Question header -->
         <div class="flex items-start justify-between gap-3">
-          <p class="text-sm font-medium text-gray-700 flex-1">{{ q.question }}</p>
+          <p class="text-sm font-semibold text-gray-800 flex-1 leading-snug">{{ q.question }}</p>
           <button @click="deleteQuestion(q.id)" class="text-gray-300 hover:text-red-400 text-sm shrink-0 mt-0.5">✕</button>
         </div>
 
         <!-- Bullet points editor -->
-        <div class="space-y-1.5">
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Your key points <span class="normal-case font-normal">(optional — helps the skill craft better answers)</span></p>
+        <div class="rounded-md bg-gray-50 px-3 py-2.5 space-y-1.5">
+          <p class="text-xs font-medium text-gray-400">Your notes <span class="font-normal">(optional — helps craft better answers)</span></p>
           <div v-for="(bullet, bi) in bulletEdits[q.id]" :key="bi" class="flex items-center gap-2">
-            <span class="text-gray-300 text-sm">•</span>
+            <span class="text-gray-300 text-sm shrink-0">•</span>
             <input
               v-model="bulletEdits[q.id][bi]"
               @blur="saveBullets(q.id)"
               type="text"
               placeholder="e.g. Led the migration of 3 legacy services"
-              class="flex-1 text-sm border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+              class="flex-1 text-sm border rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300"
             >
-            <button @click="removeBullet(q.id, bi)" class="text-gray-300 hover:text-red-400 text-xs">✕</button>
+            <button @click="removeBullet(q.id, bi)" class="text-gray-300 hover:text-red-400 text-xs shrink-0">✕</button>
           </div>
           <button
             @click="addBullet(q.id)"
-            class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 mt-1"
-          >+ Add point</button>
+            class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 mt-0.5"
+          >+ Add note</button>
         </div>
 
         <!-- Answer -->
-        <div v-if="q.answer" class="relative">
-          <p class="text-sm text-gray-600 leading-relaxed pr-20 whitespace-pre-wrap">{{ q.answer }}</p>
-          <button
-            @click="copyAnswer(q)"
-            class="absolute top-0 right-0 text-xs px-2 py-1 border rounded hover:bg-gray-50 transition-colors"
-            :class="copiedId === q.id ? 'border-green-400 text-green-600' : 'text-gray-400'"
-          >{{ copiedId === q.id ? '✓ Copied' : 'Copy' }}</button>
+        <div v-if="q.answer" class="rounded-md bg-slate-50 border border-slate-100 p-3.5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-400">Answer</span>
+            <button
+              @click="copyAnswer(q)"
+              class="text-xs px-2 py-0.5 border rounded transition-colors"
+              :class="copiedId === q.id ? 'border-green-400 text-green-600 bg-green-50' : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-white'"
+            >{{ copiedId === q.id ? '✓ Copied' : 'Copy' }}</button>
+          </div>
+          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ q.answer }}</p>
         </div>
         <p v-else class="text-xs text-gray-400 italic">No answer yet — run <code class="bg-gray-100 px-1 rounded">/answer-questions {{ appId }}</code> to generate</p>
 
