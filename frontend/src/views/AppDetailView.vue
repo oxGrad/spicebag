@@ -2,12 +2,48 @@
   <div class="mb-4">
     <RouterLink to="/apps" class="text-blue-600 hover:underline text-sm">← Applications</RouterLink>
   </div>
-  <div v-if="detail" class="mb-6">
+  <div v-if="detail" class="mb-5">
     <h1 class="text-2xl font-bold">{{ detail.app.Company }}</h1>
     <p class="text-gray-500">{{ detail.app.Role }} · Applied {{ detail.app.AppliedDate }}</p>
   </div>
-  <div v-if="detail" class="grid grid-cols-2 gap-6">
-    <div class="space-y-6">
+
+  <div v-if="detail" class="grid grid-cols-2 gap-6 mb-6">
+    <!-- Left: Documents -->
+    <div class="bg-white rounded-lg shadow divide-y">
+      <div class="px-5 py-4">
+        <h2 class="font-semibold">Documents</h2>
+      </div>
+
+      <div
+        v-for="doc in docs"
+        :key="doc.key"
+        class="flex items-center border-l-2 transition-colors"
+        :class="!comparing && activeDoc?.key === doc.key ? 'border-blue-500 bg-blue-50/40' : 'border-transparent'"
+      >
+        <button
+          @click="selectDoc(doc)"
+          class="flex-1 text-left px-5 py-3.5 hover:bg-gray-50 flex items-center justify-between"
+        >
+          <div>
+            <p class="text-sm font-medium" :class="!comparing && activeDoc?.key === doc.key ? 'text-blue-700' : ''">{{ doc.label }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ doc.sub }}</p>
+          </div>
+          <span v-if="!comparing && activeDoc?.key === doc.key" class="text-xs text-gray-300">▸</span>
+        </button>
+
+        <!-- Compare button: only on Base CV -->
+        <button
+          v-if="doc.key === 'base'"
+          @click="startCompare"
+          class="mr-4 px-2.5 py-1 text-xs border rounded hover:bg-gray-50 text-gray-500 hover:text-gray-700 shrink-0"
+          :class="comparing ? 'border-blue-400 text-blue-600 bg-blue-50' : ''"
+          title="Compare base CV with tailored CV"
+        >Compare</button>
+      </div>
+    </div>
+
+    <!-- Right: Status history + info -->
+    <div class="space-y-5">
       <div class="bg-white rounded-lg shadow p-5">
         <h2 class="font-semibold mb-3">Status History</h2>
         <div class="space-y-2 mb-4">
@@ -26,7 +62,7 @@
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Notes (optional)</label>
-            <input v-model="newNotes" type="text" class="border rounded px-2 py-1.5 text-sm w-40">
+            <input v-model="newNotes" type="text" class="border rounded px-2 py-1.5 text-sm w-36">
           </div>
           <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Update</button>
         </form>
@@ -35,23 +71,14 @@
       <div class="bg-white rounded-lg shadow p-5 space-y-4">
         <div v-if="detail.app.JobURL || detail.app.JobSummary">
           <h2 class="font-semibold mb-2">Job Post</h2>
-          <a
-            v-if="detail.app.JobURL"
-            :href="detail.app.JobURL"
-            target="_blank"
-            rel="noopener"
-            class="text-sm text-blue-600 hover:underline break-all block mb-2"
-          >{{ detail.app.JobURL }}</a>
+          <a v-if="detail.app.JobURL" :href="detail.app.JobURL" target="_blank" rel="noopener"
+             class="text-sm text-blue-600 hover:underline break-all block mb-2">{{ detail.app.JobURL }}</a>
           <p v-if="detail.app.JobSummary" class="text-sm text-gray-600 leading-relaxed">{{ detail.app.JobSummary }}</p>
         </div>
         <div>
           <h2 class="font-semibold mb-1">Source</h2>
-          <select
-            v-model="selectedSource"
-            @change="saveSource"
-            class="border rounded px-2 py-1.5 text-sm w-full"
-          >
-            <option value="">— not set —</option>
+          <select v-model="selectedSource" @change="saveSource" class="border rounded px-2 py-1.5 text-sm w-full">
+            <option value="">- not set -</option>
             <option v-for="src in sources" :key="src.id" :value="src.name">{{ src.name }}</option>
           </select>
         </div>
@@ -62,52 +89,72 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow p-5">
-        <h2 class="font-semibold mb-4">Documents</h2>
-
-        <div class="space-y-3">
-          <div class="flex items-center justify-between text-sm">
-            <div>
-              <p class="font-medium">Tailored CV</p>
-              <p class="text-xs text-gray-400">Generated for this application</p>
-            </div>
-            <a
-              :href="appCVUrl"
-              target="_blank"
-              class="text-blue-600 hover:underline text-xs"
-            >Open →</a>
-          </div>
-
-          <div class="border-t pt-3 flex items-center justify-between text-sm">
-            <div>
-              <p class="font-medium">Cover Letter</p>
-              <p class="text-xs text-gray-400">Generated for this application</p>
-            </div>
-            <a
-              :href="appCLUrl"
-              target="_blank"
-              class="text-blue-600 hover:underline text-xs"
-            >Open →</a>
-          </div>
-
-          <template v-if="detail.app.BaseCVUsed">
-            <div class="border-t pt-3 flex items-center justify-between text-sm">
-              <div>
-                <p class="font-medium text-gray-500">Base CV</p>
-                <p class="text-xs text-gray-400">{{ detail.app.BaseCVUsed.replace(/\.html$/, '') }}</p>
-              </div>
-              <a
-                :href="`/render/cv/${detail.app.BaseCVUsed}`"
-                target="_blank"
-                class="text-gray-400 hover:text-blue-600 hover:underline text-xs"
-              >Open →</a>
-            </div>
-          </template>
-        </div>
+  <!-- Compare view -->
+  <div v-if="comparing" class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
+      <div class="flex items-center gap-6 text-sm">
+        <span class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-sm bg-red-200 border border-red-400 inline-block"></span>
+          <span class="text-gray-600">Removed in tailored</span>
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-sm bg-green-200 border border-green-400 inline-block"></span>
+          <span class="text-gray-600">Added in tailored</span>
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <select v-model="compareTheme" class="border rounded px-2 py-1 text-xs bg-white">
+          <option value="">No theme</option>
+          <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
+        </select>
+        <button @click="comparing = false" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
       </div>
     </div>
+    <div class="grid grid-cols-2" style="height: 75vh;">
+      <div class="flex flex-col border-r">
+        <div class="text-xs font-medium text-gray-500 px-3 py-1.5 bg-gray-50 border-b">Base CV</div>
+        <iframe
+          ref="leftIframeRef"
+          :src="compareBaseUrl"
+          class="flex-1 border-0 w-full"
+          title="Base CV"
+          @load="onLeftLoad"
+        />
+      </div>
+      <div class="flex flex-col">
+        <div class="text-xs font-medium text-gray-500 px-3 py-1.5 bg-gray-50 border-b">Tailored CV</div>
+        <iframe
+          ref="rightIframeRef"
+          :src="compareTailoredUrl"
+          class="flex-1 border-0 w-full"
+          title="Tailored CV"
+          @load="onRightLoad"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Single document preview -->
+  <div v-else-if="activeDoc" class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
+      <span class="text-sm font-medium text-gray-700">{{ activeDoc.label }}</span>
+      <div class="flex items-center gap-3">
+        <select v-model="previewTheme" class="border rounded px-2 py-1 text-xs bg-white">
+          <option value="">No theme</option>
+          <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
+        </select>
+        <button @click="activeDoc = null" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+      </div>
+    </div>
+    <iframe
+      :key="activeDoc.key + previewTheme"
+      :src="activeDocUrl"
+      class="w-full border-0"
+      style="height: 75vh;"
+      :title="activeDoc.label"
+    />
   </div>
 </template>
 
@@ -115,7 +162,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api.js'
-import { CV_DEFAULT_KEY, getDefaultTheme } from '../theme-defaults.js'
+import { CV_DEFAULT_KEY, CL_DEFAULT_KEY, getDefaultTheme } from '../theme-defaults.js'
 
 const route = useRoute()
 const detail = ref(null)
@@ -123,28 +170,160 @@ const newStatus = ref('')
 const newNotes = ref('')
 const sources = ref([])
 const selectedSource = ref('')
+const themes = ref([])
+const previewTheme = ref(getDefaultTheme(CV_DEFAULT_KEY))
+const activeDoc = ref(null)
 
-const defaultTheme = getDefaultTheme(CV_DEFAULT_KEY)
+// Compare mode
+const comparing = ref(false)
+const compareTheme = ref(getDefaultTheme(CV_DEFAULT_KEY))
+const leftIframeRef = ref(null)
+const rightIframeRef = ref(null)
+let leftLoaded = false
+let rightLoaded = false
+let syncingScroll = false
 
-const appCVUrl = computed(() => {
-  if (!detail.value) return ''
-  const t = defaultTheme ? `?theme=${encodeURIComponent(defaultTheme)}` : ''
+function themeForDoc(doc) {
+  return doc.key === 'cl' ? getDefaultTheme(CL_DEFAULT_KEY) : getDefaultTheme(CV_DEFAULT_KEY)
+}
+
+const docs = computed(() => {
+  if (!detail.value) return []
+  const id = route.params.id
+  const items = [
+    { key: 'cv',   label: 'Tailored CV',  sub: 'Generated for this application', baseUrl: `/render/app/${id}/cv` },
+    { key: 'cl',   label: 'Cover Letter', sub: 'Generated for this application', baseUrl: `/render/app/${id}/cl` },
+  ]
+  if (detail.value.app.BaseCVUsed) {
+    items.push({
+      key: 'base',
+      label: 'Base CV',
+      sub: detail.value.app.BaseCVUsed.replace(/\.html$/, ''),
+      baseUrl: `/render/cv/${detail.value.app.BaseCVUsed}`,
+    })
+  }
+  return items
+})
+
+const activeDocUrl = computed(() => {
+  if (!activeDoc.value) return ''
+  const t = previewTheme.value ? `?theme=${encodeURIComponent(previewTheme.value)}` : ''
+  return activeDoc.value.baseUrl + t
+})
+
+const compareBaseUrl = computed(() => {
+  if (!detail.value?.app.BaseCVUsed) return ''
+  const t = compareTheme.value ? `?theme=${encodeURIComponent(compareTheme.value)}` : ''
+  return `/render/cv/${detail.value.app.BaseCVUsed}${t}`
+})
+
+const compareTailoredUrl = computed(() => {
+  const t = compareTheme.value ? `?theme=${encodeURIComponent(compareTheme.value)}` : ''
   return `/render/app/${route.params.id}/cv${t}`
 })
 
-const appCLUrl = computed(() => {
-  if (!detail.value) return ''
-  const t = defaultTheme ? `?theme=${encodeURIComponent(defaultTheme)}` : ''
-  return `/render/app/${route.params.id}/cl${t}`
-})
+function selectDoc(doc) {
+  comparing.value = false
+  if (activeDoc.value?.key === doc.key) {
+    activeDoc.value = null
+  } else {
+    activeDoc.value = doc
+    previewTheme.value = themeForDoc(doc)
+  }
+}
+
+function startCompare() {
+  activeDoc.value = null
+  comparing.value = true
+  leftLoaded = false
+  rightLoaded = false
+  compareTheme.value = getDefaultTheme(CV_DEFAULT_KEY)
+}
+
+function onLeftLoad() {
+  leftLoaded = true
+  if (rightLoaded) onBothLoaded()
+}
+
+function onRightLoad() {
+  rightLoaded = true
+  if (leftLoaded) onBothLoaded()
+}
+
+function onBothLoaded() {
+  setupScrollSync()
+  injectDiff()
+}
+
+function setupScrollSync() {
+  const left = leftIframeRef.value?.contentWindow
+  const right = rightIframeRef.value?.contentWindow
+  if (!left || !right) return
+
+  left.addEventListener('scroll', () => {
+    if (syncingScroll) return
+    syncingScroll = true
+    const ratio = left.scrollY / Math.max(1, left.document.body.scrollHeight - left.innerHeight)
+    right.scrollTo(0, ratio * Math.max(1, right.document.body.scrollHeight - right.innerHeight))
+    requestAnimationFrame(() => { syncingScroll = false })
+  })
+
+  right.addEventListener('scroll', () => {
+    if (syncingScroll) return
+    syncingScroll = true
+    const ratio = right.scrollY / Math.max(1, right.document.body.scrollHeight - right.innerHeight)
+    left.scrollTo(0, ratio * Math.max(1, left.document.body.scrollHeight - left.innerHeight))
+    requestAnimationFrame(() => { syncingScroll = false })
+  })
+}
+
+function injectDiff() {
+  const leftDoc = leftIframeRef.value?.contentDocument
+  const rightDoc = rightIframeRef.value?.contentDocument
+  if (!leftDoc || !rightDoc) return
+
+  const leftTexts = new Set([...leftDoc.querySelectorAll('li')].map(el => el.innerText.trim()))
+  const rightTexts = new Set([...rightDoc.querySelectorAll('li')].map(el => el.innerText.trim()))
+
+  // Tailored (right): green = added relative to base
+  rightDoc.querySelectorAll('li').forEach(el => {
+    if (!leftTexts.has(el.innerText.trim())) {
+      Object.assign(el.style, {
+        background: '#dcfce7',
+        borderLeft: '3px solid #16a34a',
+        paddingLeft: '6px',
+        marginLeft: '-9px',
+      })
+    }
+  })
+
+  // Base (left): red = removed in tailored
+  leftDoc.querySelectorAll('li').forEach(el => {
+    if (!rightTexts.has(el.innerText.trim())) {
+      Object.assign(el.style, {
+        background: '#fee2e2',
+        borderLeft: '3px solid #ef4444',
+        paddingLeft: '6px',
+        marginLeft: '-9px',
+        textDecoration: 'line-through',
+        opacity: '0.75',
+      })
+    }
+  })
+}
 
 onMounted(async () => {
-  ;[detail.value, sources.value] = await Promise.all([
+  ;[detail.value, sources.value, themes.value] = await Promise.all([
     api.apps.get(route.params.id),
     api.sources.list(),
+    api.themes.list(),
   ])
   newStatus.value = detail.value.valid_statuses[0]
   selectedSource.value = detail.value.app.Source ?? ''
+  if (docs.value.length) {
+    activeDoc.value = docs.value[0]
+    previewTheme.value = themeForDoc(docs.value[0])
+  }
 })
 
 async function saveSource() {
@@ -159,12 +338,12 @@ async function submitStatus() {
 
 function badgeClass(status) {
   const map = {
-    offer: 'bg-green-100 text-green-800',
-    interview: 'bg-yellow-100 text-yellow-800',
+    offer:      'bg-green-100 text-green-800',
+    interview:  'bg-yellow-100 text-yellow-800',
     assessment: 'bg-yellow-100 text-yellow-800',
-    rejected: 'bg-red-100 text-red-800',
-    withdrawn: 'bg-red-100 text-red-800',
-    ghosted: 'bg-red-100 text-red-800',
+    rejected:   'bg-red-100 text-red-800',
+    withdrawn:  'bg-red-100 text-red-800',
+    ghosted:    'bg-red-100 text-red-800',
   }
   return map[status?.toLowerCase()] ?? 'bg-blue-100 text-blue-800'
 }
