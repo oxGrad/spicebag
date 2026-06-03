@@ -92,6 +92,7 @@ Use only verified facts. Do not include any experience or achievement the user c
 - `<div class="cv-entry-header">` containing `<h3>` (job title), `<span class="cv-company">`, `<span class="cv-dates">`
 - `<ul>/<li>` for bullet points
 - Apply the tailoring level decided in step 3
+- Every job/education entry MUST be wrapped in `<div class="cv-entry">` — this is what the theme's `page-break-inside: avoid` rule targets to prevent entries from splitting across A4 pages
 
 **Cover letter** — generate an HTML fragment (no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags):
 ```html

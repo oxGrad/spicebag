@@ -89,7 +89,10 @@ h2 {
   margin-top: 20px;
   margin-bottom: 8px;
 }
-.cv-entry { margin-bottom: 12px; }
+/* A4 PDF page-break control */
+@page { size: A4; }
+.cv-entry { margin-bottom: 12px; page-break-inside: avoid; }
+h2 { page-break-after: avoid; }
 .cv-entry-header {
   display: flex;
   justify-content: space-between;

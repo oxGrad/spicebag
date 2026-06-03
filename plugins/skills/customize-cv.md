@@ -26,6 +26,7 @@ Tailor a base CV for the job post or role type provided in $ARGUMENTS.
    - Adjust wording, bullet point emphasis, and section ordering
    - Update the summary/objective section to match the target role
    - Use exact years from `get_experience_stats` — never guess or round
+   - Every job/education entry MUST be wrapped in `<div class="cv-entry">` — this is what the theme's `page-break-inside: avoid` rule targets to prevent entries from splitting across A4 pages
 7. Generate a filename: `cv-{role-type}-{YYYY-MM-DD}.html` using today's date
 8. Call `write_cv` with the new filename and tailored HTML fragment content
 9. Confirm the filename saved and summarize the key changes made
