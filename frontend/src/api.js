@@ -40,6 +40,9 @@ export const api = {
       post(`/apps/${id}/status`, { status, notes: notes ?? "" }),
     updateSource: (id, source) =>
       post(`/apps/${id}/source`, { source }),
+    pdfs: (id) => get(`/apps/${id}/pdfs`),
+    exportPDF: (id, docType, theme) =>
+      post(`/apps/${id}/pdf`, { doc_type: docType, theme: theme ?? '' }),
   },
   cv: {
     list: () => get("/cv"),

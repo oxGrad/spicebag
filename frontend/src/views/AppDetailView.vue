@@ -40,6 +40,24 @@
           title="Compare base CV with tailored CV"
         >Compare</button>
       </div>
+
+      <!-- PDF files -->
+      <template v-if="pdfs.length > 0">
+        <div class="px-5 py-2 text-xs text-gray-400 uppercase tracking-wide bg-gray-50 border-t">Generated PDFs</div>
+        <div
+          v-for="p in pdfs"
+          :key="p.filename"
+          class="flex items-center border-l-2 transition-colors"
+          :class="activeDoc?.key === 'pdf:' + p.filename ? 'border-blue-500 bg-blue-50/40' : 'border-transparent'"
+        >
+          <button @click="selectPDF(p)" class="flex-1 text-left px-5 py-3 hover:bg-gray-50 flex items-center gap-3">
+            <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 shrink-0">PDF</span>
+            <p class="text-sm font-medium truncate min-w-0" :class="activeDoc?.key === 'pdf:' + p.filename ? 'text-blue-700' : ''">
+              {{ p.filename.replace(/\.pdf$/, '') }}
+            </p>
+          </button>
+        </div>
+      </template>
     </div>
 
     <!-- Right: Status history + info -->
@@ -139,17 +157,36 @@
   <!-- Single document preview -->
   <div v-else-if="activeDoc" class="bg-white rounded-lg shadow overflow-hidden">
     <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
-      <span class="text-sm font-medium text-gray-700">{{ activeDoc.label }}</span>
+      <div class="flex items-center gap-2">
+        <span v-if="activeDoc.isPDF" class="text-xs font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600">PDF</span>
+        <span class="text-sm font-medium text-gray-700">{{ activeDoc.label }}</span>
+        <button @click="triggerRefresh" title="Refresh" class="text-gray-400 hover:text-gray-600 text-sm leading-none">
+          <span :class="{ spinning: isRefreshing }">↺</span>
+        </button>
+      </div>
       <div class="flex items-center gap-3">
-        <select v-model="previewTheme" class="border rounded px-2 py-1 text-xs bg-white">
-          <option value="">No theme</option>
-          <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <template v-if="!activeDoc.isPDF">
+          <span
+            v-if="activePDF"
+            class="text-xs text-green-600 font-medium truncate max-w-[180px]"
+            :title="activePDF.filename"
+          >✓ {{ activePDF.filename }}</span>
+          <button
+            v-else
+            @click="generatePDF"
+            :disabled="generatingPDF"
+            class="px-2.5 py-1 text-xs border rounded hover:bg-gray-50 disabled:opacity-50 transition-colors text-gray-600"
+          >{{ generatingPDF ? 'Generating…' : 'Generate PDF' }}</button>
+          <select v-model="previewTheme" class="border rounded px-2 py-1 text-xs bg-white">
+            <option value="">No theme</option>
+            <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
+          </select>
+        </template>
         <button @click="activeDoc = null" class="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
       </div>
     </div>
     <iframe
-      :key="activeDoc.key + previewTheme"
+      :key="activeDoc.key + previewTheme + previewKey"
       :src="activeDocUrl"
       class="w-full border-0"
       style="height: 75vh;"
@@ -173,6 +210,20 @@ const selectedSource = ref('')
 const themes = ref([])
 const previewTheme = ref(getDefaultTheme(CV_DEFAULT_KEY))
 const activeDoc = ref(null)
+const previewKey = ref(0)
+const isRefreshing = ref(false)
+const generatingPDF = ref(false)
+const pdfs = ref([])
+
+const activePDF = computed(() =>
+  activeDoc.value ? pdfs.value.find(p => p.doc_type === activeDoc.value.key) ?? null : null
+)
+
+function triggerRefresh() {
+  previewKey.value++
+  isRefreshing.value = true
+  setTimeout(() => { isRefreshing.value = false }, 400)
+}
 
 // Compare mode
 const comparing = ref(false)
@@ -229,6 +280,39 @@ function selectDoc(doc) {
   } else {
     activeDoc.value = doc
     previewTheme.value = themeForDoc(doc)
+  }
+}
+
+function selectPDF(p) {
+  comparing.value = false
+  const key = 'pdf:' + p.filename
+  if (activeDoc.value?.key === key) {
+    activeDoc.value = null
+  } else {
+    activeDoc.value = {
+      key,
+      label: p.filename.replace(/\.pdf$/, ''),
+      sub: 'PDF',
+      baseUrl: `/render/app/${route.params.id}/pdf/${encodeURIComponent(p.filename)}`,
+      isPDF: true,
+    }
+    previewTheme.value = ''
+  }
+}
+
+async function generatePDF() {
+  if (!activeDoc.value) return
+  generatingPDF.value = true
+  try {
+    const res = await api.apps.exportPDF(route.params.id, activeDoc.value.key, previewTheme.value)
+    const docType = activeDoc.value.key
+    // remove any previous entry for this doc type then add the new one
+    pdfs.value = pdfs.value.filter(p => p.doc_type !== docType)
+    pdfs.value.push({ filename: res.filename, doc_type: docType })
+  } catch (e) {
+    alert('PDF generation failed: ' + e.message)
+  } finally {
+    generatingPDF.value = false
   }
 }
 
@@ -313,10 +397,11 @@ function injectDiff() {
 }
 
 onMounted(async () => {
-  ;[detail.value, sources.value, themes.value] = await Promise.all([
+  ;[detail.value, sources.value, themes.value, pdfs.value] = await Promise.all([
     api.apps.get(route.params.id),
     api.sources.list(),
     api.themes.list(),
+    api.apps.pdfs(route.params.id),
   ])
   newStatus.value = detail.value.valid_statuses[0]
   selectedSource.value = detail.value.app.Source ?? ''
@@ -348,3 +433,14 @@ function badgeClass(status) {
   return map[status?.toLowerCase()] ?? 'bg-blue-100 text-blue-800'
 }
 </script>
+
+<style scoped>
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+.spinning {
+  display: inline-block;
+  animation: spin-once 0.4s ease-out forwards;
+}
+</style>
