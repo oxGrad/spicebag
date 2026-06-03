@@ -5,14 +5,14 @@ description: Use when the user has an existing CV file (DOCX preferred, PDF fall
 
 Import an existing CV into spicebag. Extracts content as an HTML fragment and visual styling as a CSS theme.
 
-**Prefer DOCX over PDF** — DOCX is structured XML with explicit styles, colors, and table data. PDF is a rendering artifact; heading detection requires heuristics and tables are often lost. If the user provides a PDF and has a DOCX available, ask them to use the DOCX instead. If only PDF is available, proceed with best-effort extraction and warn that results may be less accurate.
+**Prefer DOCX over PDF**: DOCX is structured XML with explicit styles, colors, and table data. PDF is a rendering artifact; heading detection requires heuristics and tables are often lost. If the user provides a PDF and has a DOCX available, ask them to use the DOCX instead. If only PDF is available, proceed with best-effort extraction and warn that results may be less accurate.
 
 Required: path to a `.docx` or `.pdf` file in $ARGUMENTS.
 
 ## Process
 
 1. Read the file at the path given in $ARGUMENTS
-2. Extract CV content as an HTML fragment using the standard CV structure below — no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags
+2. Extract CV content as an HTML fragment using the standard CV structure below: no DOCTYPE, no `<html>`, `<head>`, or `<body>` tags
 3. Extract the visual theme from the document:
    - Body font family, size, line-height, and text color
    - Heading font, sizes, weights, and colors for h1/h2/h3
@@ -26,7 +26,7 @@ Required: path to a `.docx` or `.pdf` file in $ARGUMENTS.
 
 ## Standard CV HTML Structure
 
-Use this exact structure — class names must match so themes apply correctly:
+Use this exact structure: class names must match so themes apply correctly:
 
 ```html
 <h1>Full Name</h1>
@@ -64,7 +64,7 @@ Use this exact structure — class names must match so themes apply correctly:
 
 ## Standard CSS Theme Format
 
-Match this selector structure — themes must target these exact elements and classes:
+Match this selector structure: themes must target these exact elements and classes:
 
 ```css
 body {
@@ -125,8 +125,8 @@ If the source document has no discernible accent color, default to `#2e75b6`.
 
 ## Rules
 
-- Never alter factual content — names, companies, dates, skills must be verbatim
+- Never alter factual content: names, companies, dates, skills must be verbatim
 - If $ARGUMENTS is empty, ask the user for the file path before proceeding
 - If the file is a PDF and a DOCX version likely exists, ask the user to provide the DOCX for better accuracy
 - If the font is unavailable on the web, pick the closest web-safe or system-stack equivalent
-- Save the CV as `base.html` — this is the master CV that `/customize-cv` and `/apply` build from
+- Save the CV as `base.html`: this is the master CV that `/customize-cv` and `/apply` build from
