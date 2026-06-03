@@ -4,7 +4,16 @@
   </div>
   <div v-if="detail" class="mb-5">
     <h1 class="text-2xl font-bold">{{ detail.app.Company }}</h1>
-    <p class="text-gray-500">{{ detail.app.Role }} · Applied {{ detail.app.AppliedDate }}</p>
+    <div class="flex items-center gap-3 mt-1">
+      <p class="text-gray-500 text-sm">{{ detail.app.Role }} · Applied {{ detail.app.AppliedDate }}</p>
+      <button
+        @click="copyAppId"
+        class="flex items-center gap-1 text-xs border rounded px-2 py-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+        :title="'Copy application ID ' + appId"
+      >
+        {{ idCopied ? '✓ Copied' : 'ID ' + appId }}
+      </button>
+    </div>
   </div>
 
   <div v-if="detail" class="grid grid-cols-2 gap-6 mb-6">
@@ -193,6 +202,78 @@
       :title="activeDoc.label"
     />
   </div>
+
+  <!-- Questions & Answers -->
+  <div v-if="detail" class="mt-6 bg-white rounded-lg shadow overflow-hidden">
+    <div class="px-5 py-4 border-b flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold">Application Questions</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Run <code class="bg-gray-100 px-1 rounded">/answer-questions {{ appId }}</code> to generate answers</p>
+      </div>
+    </div>
+
+    <!-- Question list -->
+    <div v-if="questions.length > 0" class="divide-y">
+      <div v-for="q in questions" :key="q.id" class="p-5 space-y-3">
+
+        <!-- Question header -->
+        <div class="flex items-start justify-between gap-3">
+          <p class="text-sm font-medium text-gray-700 flex-1">{{ q.question }}</p>
+          <button @click="deleteQuestion(q.id)" class="text-gray-300 hover:text-red-400 text-sm shrink-0 mt-0.5">✕</button>
+        </div>
+
+        <!-- Bullet points editor -->
+        <div class="space-y-1.5">
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Your key points <span class="normal-case font-normal">(optional — helps the skill craft better answers)</span></p>
+          <div v-for="(bullet, bi) in bulletEdits[q.id]" :key="bi" class="flex items-center gap-2">
+            <span class="text-gray-300 text-sm">•</span>
+            <input
+              v-model="bulletEdits[q.id][bi]"
+              @blur="saveBullets(q.id)"
+              type="text"
+              placeholder="e.g. Led the migration of 3 legacy services"
+              class="flex-1 text-sm border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+            >
+            <button @click="removeBullet(q.id, bi)" class="text-gray-300 hover:text-red-400 text-xs">✕</button>
+          </div>
+          <button
+            @click="addBullet(q.id)"
+            class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 mt-1"
+          >+ Add point</button>
+        </div>
+
+        <!-- Answer -->
+        <div v-if="q.answer" class="relative">
+          <p class="text-sm text-gray-600 leading-relaxed pr-20 whitespace-pre-wrap">{{ q.answer }}</p>
+          <button
+            @click="copyAnswer(q)"
+            class="absolute top-0 right-0 text-xs px-2 py-1 border rounded hover:bg-gray-50 transition-colors"
+            :class="copiedId === q.id ? 'border-green-400 text-green-600' : 'text-gray-400'"
+          >{{ copiedId === q.id ? '✓ Copied' : 'Copy' }}</button>
+        </div>
+        <p v-else class="text-xs text-gray-400 italic">No answer yet — run <code class="bg-gray-100 px-1 rounded">/answer-questions {{ appId }}</code> to generate</p>
+
+      </div>
+    </div>
+    <div v-else class="px-5 py-6 text-center text-gray-400 text-sm">No questions added yet.</div>
+
+    <!-- Add question form -->
+    <div class="px-5 py-4 border-t bg-gray-50">
+      <form @submit.prevent="addQuestion" class="flex gap-2">
+        <textarea
+          v-model="newQuestion"
+          placeholder="Paste a question from the application form…"
+          rows="2"
+          class="flex-1 border rounded px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-400"
+        ></textarea>
+        <button
+          type="submit"
+          :disabled="!newQuestion.trim()"
+          class="self-end bg-blue-600 text-white rounded px-3 py-2 text-sm hover:bg-blue-700 disabled:opacity-50"
+        >Add</button>
+      </form>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -214,6 +295,13 @@ const previewKey = ref(0)
 const isRefreshing = ref(false)
 const generatingPDF = ref(false)
 const pdfs = ref([])
+const questions = ref([])
+const newQuestion = ref('')
+const copiedId = ref(null)
+const idCopied = ref(false)
+const bulletEdits = ref({}) // questionId -> string[]
+
+const appId = computed(() => route.params.id)
 
 const activePDF = computed(() =>
   activeDoc.value ? pdfs.value.find(p => p.doc_type === activeDoc.value.key) ?? null : null
@@ -397,12 +485,20 @@ function injectDiff() {
 }
 
 onMounted(async () => {
-  ;[detail.value, sources.value, themes.value, pdfs.value] = await Promise.all([
-    api.apps.get(route.params.id),
-    api.sources.list(),
-    api.themes.list(),
-    api.apps.pdfs(route.params.id),
-  ])
+  try {
+    ;[detail.value, sources.value, themes.value, pdfs.value, questions.value] = await Promise.all([
+      api.apps.get(route.params.id),
+      api.sources.list(),
+      api.themes.list(),
+      api.apps.pdfs(route.params.id),
+      api.apps.questions(route.params.id),
+    ])
+  } catch (e) {
+    console.error('AppDetailView load failed:', e)
+    alert('Failed to load application: ' + e.message)
+    return
+  }
+  initBulletEdits(questions.value)
   newStatus.value = detail.value.valid_statuses[0]
   selectedSource.value = detail.value.app.Source ?? ''
   if (docs.value.length) {
@@ -410,6 +506,57 @@ onMounted(async () => {
     previewTheme.value = themeForDoc(docs.value[0])
   }
 })
+
+function copyAppId() {
+  navigator.clipboard.writeText(String(appId.value))
+  idCopied.value = true
+  setTimeout(() => { idCopied.value = false }, 2000)
+}
+
+function initBulletEdits(qs) {
+  const edits = {}
+  for (const q of qs) edits[q.id] = [...(q.user_bullets ?? [])]
+  bulletEdits.value = edits
+}
+
+async function addQuestion() {
+  if (!newQuestion.value.trim()) return
+  const q = await api.apps.addQuestion(route.params.id, newQuestion.value.trim(), questions.value.length)
+  questions.value.push(q)
+  bulletEdits.value[q.id] = []
+  newQuestion.value = ''
+}
+
+async function deleteQuestion(qid) {
+  await api.apps.deleteQuestion(route.params.id, qid)
+  questions.value = questions.value.filter(q => q.id !== qid)
+  delete bulletEdits.value[qid]
+}
+
+function addBullet(qid) {
+  bulletEdits.value[qid] = [...(bulletEdits.value[qid] ?? []), '']
+}
+
+function removeBullet(qid, index) {
+  const bullets = [...bulletEdits.value[qid]]
+  bullets.splice(index, 1)
+  bulletEdits.value[qid] = bullets
+  saveBullets(qid)
+}
+
+async function saveBullets(qid) {
+  const bullets = (bulletEdits.value[qid] ?? []).filter(b => b.trim())
+  await api.apps.updateBullets(route.params.id, qid, bullets)
+  // sync back into questions so the skill sees current bullets
+  const q = questions.value.find(q => q.id === qid)
+  if (q) q.user_bullets = bullets
+}
+
+function copyAnswer(q) {
+  navigator.clipboard.writeText(q.answer)
+  copiedId.value = q.id
+  setTimeout(() => { copiedId.value = null }, 2000)
+}
 
 async function saveSource() {
   await api.apps.updateSource(route.params.id, selectedSource.value)

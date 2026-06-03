@@ -67,6 +67,13 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/apps/{id}/pdf", s.handleAPIAppExportPDF)
 	s.mux.HandleFunc("GET /render/app/{id}/pdf/{filename}", s.handleRenderAppPDF)
 
+	s.mux.HandleFunc("GET /api/apps/{id}/questions", s.handleAPIQuestionsList)
+	s.mux.HandleFunc("POST /api/apps/{id}/questions", s.handleAPIQuestionsAdd)
+	s.mux.HandleFunc("POST /api/apps/{id}/questions/answers", s.handleAPIQuestionsBulkAnswer)
+	s.mux.HandleFunc("PUT /api/apps/{id}/questions/{qid}", s.handleAPIQuestionUpdate)
+	s.mux.HandleFunc("PUT /api/apps/{id}/questions/{qid}/bullets", s.handleAPIQuestionBulletsUpdate)
+	s.mux.HandleFunc("DELETE /api/apps/{id}/questions/{qid}", s.handleAPIQuestionDelete)
+
 	s.mux.HandleFunc("GET /api/cv", s.handleAPICVList)
 	s.mux.HandleFunc("GET /api/cv/{name}/usages", s.handleAPICVUsages)
 	s.mux.HandleFunc("GET /api/cl", s.handleAPICLList)

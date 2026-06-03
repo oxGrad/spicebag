@@ -41,6 +41,23 @@ export const api = {
     updateSource: (id, source) =>
       post(`/apps/${id}/source`, { source }),
     pdfs: (id) => get(`/apps/${id}/pdfs`),
+    questions: (id) => get(`/apps/${id}/questions`),
+    addQuestion: (id, question, position) =>
+      post(`/apps/${id}/questions`, { question, position: position ?? 0 }),
+    updateAnswer: (id, qid, answer) =>
+      fetch(`/api/apps/${id}/questions/${qid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ answer }),
+      }),
+    updateBullets: (id, qid, bullets) =>
+      fetch(`/api/apps/${id}/questions/${qid}/bullets`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bullets),
+      }),
+    deleteQuestion: (id, qid) =>
+      fetch(`/api/apps/${id}/questions/${qid}`, { method: 'DELETE' }),
     exportPDF: (id, docType, theme) =>
       post(`/apps/${id}/pdf`, { doc_type: docType, theme: theme ?? '' }),
   },

@@ -37,6 +37,7 @@ func NewServer(root, dbPath, gotenbergURL string) (*Server, error) {
 	s.registerPDFTools()
 	s.registerExperienceTools()
 	s.registerApplicationTools()
+	s.registerQuestionTools()
 
 	return s, nil
 }
