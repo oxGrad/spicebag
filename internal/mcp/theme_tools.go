@@ -17,6 +17,9 @@ func (s *Server) registerThemeTools() {
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}
+			if themes == nil {
+				themes = []string{}
+			}
 			out, _ := json.Marshal(themes)
 			return mcplib.NewToolResultText(string(out)), nil
 		},

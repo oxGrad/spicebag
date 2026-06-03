@@ -18,6 +18,9 @@ func (s *Server) registerCoverLetterTools() {
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}
+			if files == nil {
+				files = []fs.FileInfo{}
+			}
 			out, _ := json.Marshal(files)
 			return mcplib.NewToolResultText(string(out)), nil
 		},
