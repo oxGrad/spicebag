@@ -66,7 +66,7 @@ func TestCreateApplication(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "stripe/backend-engineer/2025-05-20", folderPath)
 
-	cv, err := os.ReadFile(filepath.Join(root, "applications", folderPath, "cv.md"))
+	cv, err := os.ReadFile(filepath.Join(root, "applications", folderPath, "cv.html"))
 	require.NoError(t, err)
 	assert.Equal(t, "# CV", string(cv))
 

@@ -10,7 +10,7 @@
       class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer"
       @click="$router.push(`/cl/${f.Name}`)"
     >
-      <span class="font-medium">{{ f.Name }}</span>
+      <span class="font-medium">{{ f.Name.replace(/\.html$/, '') }}</span>
       <span class="text-xs text-gray-400">{{ new Date(f.ModifiedAt).toLocaleDateString() }}</span>
     </div>
   </div>

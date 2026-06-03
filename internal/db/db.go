@@ -36,7 +36,15 @@ CREATE TABLE IF NOT EXISTS application_status_history (
   changed_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   notes          TEXT
 );
+
+CREATE TABLE IF NOT EXISTS sources (
+  id   INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE
+);
 `
+
+// defaultSources are inserted once on first open.
+var defaultSources = []string{"LinkedIn", "Indeed", "Greenhouse", "Lever", "Workday", "Referral", "Company website", "Other"}
 
 func Open(path string) (*Store, error) {
 	db, err := sql.Open("sqlite", path)
@@ -47,6 +55,14 @@ func Open(path string) (*Store, error) {
 	if _, err := db.Exec(schema); err != nil {
 		db.Close()
 		return nil, err
+	}
+	// Migrate: add columns for existing databases (no-op if already present).
+	db.Exec(`ALTER TABLE applications ADD COLUMN source TEXT NOT NULL DEFAULT ''`)    //nolint:errcheck
+	db.Exec(`ALTER TABLE applications ADD COLUMN job_url TEXT NOT NULL DEFAULT ''`)   //nolint:errcheck
+	db.Exec(`ALTER TABLE applications ADD COLUMN job_summary TEXT NOT NULL DEFAULT ''`) //nolint:errcheck
+	// Seed default sources (INSERT OR IGNORE so it's idempotent).
+	for _, name := range defaultSources {
+		db.Exec(`INSERT OR IGNORE INTO sources (name) VALUES (?)`, name) //nolint:errcheck
 	}
 	return &Store{db: db}, nil
 }

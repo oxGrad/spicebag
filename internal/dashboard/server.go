@@ -17,27 +17,17 @@ var uiFS embed.FS
 
 // Server holds all dependencies and the HTTP mux.
 type Server struct {
-	root            string
-	store           *db.Store
-	cfg             config.Config
-	mux             *http.ServeMux
-	startGotenberg  func() error
-	stopGotenberg   func() error
+	root  string
+	store *db.Store
+	cfg   config.Config
+	mux   *http.ServeMux
 }
 
 // NewServer creates a Server and registers all routes.
 func NewServer(root string, store *db.Store, cfg config.Config) *Server {
 	s := &Server{root: root, store: store, cfg: cfg, mux: http.NewServeMux()}
-	s.startGotenberg = s.defaultStartGotenberg
-	s.stopGotenberg = s.defaultStopGotenberg
 	s.routes()
 	return s
-}
-
-// SetGotenbergRunners replaces the start/stop executors — used in tests.
-func (s *Server) SetGotenbergRunners(start, stop func() error) {
-	s.startGotenberg = start
-	s.stopGotenberg = stop
 }
 
 // Serve starts the HTTP server on addr (e.g. ":8080").
@@ -60,12 +50,22 @@ func (s *Server) Root() string { return s.root }
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /render/cv/{name}", s.handleRenderCV)
 	s.mux.HandleFunc("GET /render/cl/{name}", s.handleRenderCL)
+	s.mux.HandleFunc("GET /render/app/{id}/cv", s.handleRenderAppCV)
+	s.mux.HandleFunc("GET /render/app/{id}/cl", s.handleRenderAppCL)
+
+	s.mux.HandleFunc("GET /api/analytics", s.handleAPIAnalytics)
+
+	s.mux.HandleFunc("GET /api/sources", s.handleAPISourcesList)
+	s.mux.HandleFunc("POST /api/sources", s.handleAPISourcesCreate)
+	s.mux.HandleFunc("DELETE /api/sources/{id}", s.handleAPISourcesDelete)
 
 	s.mux.HandleFunc("GET /api/apps", s.handleAPIAppsList)
 	s.mux.HandleFunc("GET /api/apps/{id}", s.handleAPIAppDetail)
 	s.mux.HandleFunc("POST /api/apps/{id}/status", s.handleAPIAppStatusUpdate)
+	s.mux.HandleFunc("POST /api/apps/{id}/source", s.handleAPIAppSourceUpdate)
 
 	s.mux.HandleFunc("GET /api/cv", s.handleAPICVList)
+	s.mux.HandleFunc("GET /api/cv/{name}/usages", s.handleAPICVUsages)
 	s.mux.HandleFunc("GET /api/cl", s.handleAPICLList)
 	s.mux.HandleFunc("GET /api/themes", s.handleAPIThemesList)
 	s.mux.HandleFunc("POST /api/themes/upload", s.handleThemeUpload)
@@ -74,8 +74,6 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/stats", s.handleAPIStats)
 
 	s.mux.HandleFunc("GET /api/gotenberg/status", s.handleAPIGotenbergStatus)
-	s.mux.HandleFunc("POST /api/gotenberg/start", s.handleAPIGotenbergStart)
-	s.mux.HandleFunc("POST /api/gotenberg/stop", s.handleAPIGotenbergStop)
 
 	s.mux.HandleFunc("/", s.handleSPA)
 }

@@ -207,7 +207,7 @@ func TestExportRoute(t *testing.T) {
 
 	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello</h1>"))
 
-	form := strings.NewReader("file_path=cv%2Fcv-test.html&theme=")
+	form := strings.NewReader("file_path=cv%2Fcv-test.html&theme=&method=gotenberg")
 	req := httptest.NewRequest(http.MethodPost, "/api/export", form)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
@@ -253,52 +253,6 @@ func TestGotenbergStatusStopped(t *testing.T) {
 	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	assert.Contains(t, w.Body.String(), `"running":false`)
-}
-
-func TestGotenbergStart(t *testing.T) {
-	mock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" {
-			w.WriteHeader(http.StatusOK)
-		}
-	}))
-	defer mock.Close()
-
-	root := t.TempDir()
-	store, err := db.Open(filepath.Join(root, "test.db"))
-	require.NoError(t, err)
-	defer store.Close()
-	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
-		os.MkdirAll(filepath.Join(root, d), 0o755)
-	}
-	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
-	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil }) // no-op: skip docker
-
-	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/start", nil)
-	w := httptest.NewRecorder()
-	srv.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	assert.Contains(t, w.Body.String(), `"running":true`)
-}
-
-func TestGotenbergStop(t *testing.T) {
-	root := t.TempDir()
-	store, err := db.Open(filepath.Join(root, "test.db"))
-	require.NoError(t, err)
-	defer store.Close()
-	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
-		os.MkdirAll(filepath.Join(root, d), 0o755)
-	}
-	// nothing listening on 19999 → healthcheck returns false → "stopped"
-	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
-	srv.SetGotenbergRunners(func() error { return nil }, func() error { return nil })
-
-	req := httptest.NewRequest(http.MethodPost, "/api/gotenberg/stop", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)

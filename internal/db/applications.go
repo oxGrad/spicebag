@@ -15,6 +15,9 @@ type Application struct {
 	BaseCVUsed  string
 	Notes       string
 	FolderPath  string
+	Source      string
+	JobURL      string
+	JobSummary  string
 }
 
 type StatusHistoryEntry struct {
@@ -32,13 +35,14 @@ type ExperienceStats struct {
 
 func (s *Store) UpsertApplication(app Application) (int64, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO applications (company, role, applied_date, base_cv_used, notes, folder_path)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO applications (company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(folder_path) DO UPDATE SET
 			company=excluded.company, role=excluded.role,
 			applied_date=excluded.applied_date, base_cv_used=excluded.base_cv_used,
-			notes=excluded.notes`,
-		app.Company, app.Role, app.AppliedDate, app.BaseCVUsed, app.Notes, app.FolderPath,
+			notes=excluded.notes, source=excluded.source,
+			job_url=excluded.job_url, job_summary=excluded.job_summary`,
+		app.Company, app.Role, app.AppliedDate, app.BaseCVUsed, app.Notes, app.FolderPath, app.Source, app.JobURL, app.JobSummary,
 	)
 	if err != nil {
 		return 0, err
@@ -47,7 +51,7 @@ func (s *Store) UpsertApplication(app Application) (int64, error) {
 }
 
 func (s *Store) ListApplications() ([]Application, error) {
-	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path FROM applications ORDER BY applied_date DESC`)
+	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications ORDER BY applied_date DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +60,17 @@ func (s *Store) ListApplications() ([]Application, error) {
 	var apps []Application
 	for rows.Next() {
 		var a Application
-		if err := rows.Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath); err != nil {
+		if err := rows.Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary); err != nil {
 			return nil, err
 		}
 		apps = append(apps, a)
 	}
 	return apps, rows.Err()
+}
+
+func (s *Store) UpdateApplicationSource(id int64, source string) error {
+	_, err := s.db.Exec(`UPDATE applications SET source = ? WHERE id = ?`, source, id)
+	return err
 }
 
 func (s *Store) AddStatusHistory(applicationID int64, status, notes string) error {
@@ -98,7 +107,7 @@ type ApplicationWithStatus struct {
 // ListApplicationsWithStatus returns all applications with their latest status.
 func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 	rows, err := s.db.Query(`
-		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path,
+		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary,
 		       COALESCE(
 		         (SELECT status FROM application_status_history
 		          WHERE application_id = a.id
@@ -117,7 +126,40 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 	for rows.Next() {
 		var a ApplicationWithStatus
 		if err := rows.Scan(
-			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath,
+			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary,
+			&a.CurrentStatus,
+		); err != nil {
+			return nil, err
+		}
+		apps = append(apps, a)
+	}
+	return apps, rows.Err()
+}
+
+// ListApplicationsByBaseCV returns all applications that used the given CV filename as their base.
+func (s *Store) ListApplicationsByBaseCV(baseCVName string) ([]ApplicationWithStatus, error) {
+	rows, err := s.db.Query(`
+		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary,
+		       COALESCE(
+		         (SELECT status FROM application_status_history
+		          WHERE application_id = a.id
+		          ORDER BY changed_at DESC, id DESC LIMIT 1),
+		         'unknown'
+		       ) AS current_status
+		FROM applications a
+		WHERE a.base_cv_used = ?
+		ORDER BY a.applied_date DESC
+	`, baseCVName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var apps []ApplicationWithStatus
+	for rows.Next() {
+		var a ApplicationWithStatus
+		if err := rows.Scan(
+			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary,
 			&a.CurrentStatus,
 		); err != nil {
 			return nil, err
@@ -131,9 +173,9 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 func (s *Store) GetApplicationByID(id int64) (Application, error) {
 	var a Application
 	err := s.db.QueryRow(
-		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path FROM applications WHERE id = ?`,
+		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications WHERE id = ?`,
 		id,
-	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath)
+	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Application{}, fmt.Errorf("application %d not found: %w", id, sql.ErrNoRows)
 	}

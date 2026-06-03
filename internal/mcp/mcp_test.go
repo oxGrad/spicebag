@@ -95,7 +95,7 @@ func TestCreateApplicationTool(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, statErr := os.Stat(filepath.Join(root, "applications", "stripe", "backend-engineer", "2025-06-01", "cv.md"))
+	_, statErr := os.Stat(filepath.Join(root, "applications", "stripe", "backend-engineer", "2025-06-01", "cv.html"))
 	require.NoError(t, statErr)
 }
 

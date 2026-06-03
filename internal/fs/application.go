@@ -18,6 +18,8 @@ type ApplicationRequest struct {
 	JobPostContent     string
 	BaseCVUsed         string
 	Notes              string
+	JobURL             string
+	JobSummary         string
 }
 
 type ApplicationMetadata struct {
@@ -26,6 +28,8 @@ type ApplicationMetadata struct {
 	AppliedDate string `yaml:"applied_date"`
 	BaseCVUsed  string `yaml:"base_cv_used"`
 	Notes       string `yaml:"notes"`
+	JobURL      string `yaml:"job_url,omitempty"`
+	JobSummary  string `yaml:"job_summary,omitempty"`
 }
 
 func slugify(s string) string {
@@ -49,9 +53,9 @@ func CreateApplication(root string, req ApplicationRequest) (string, error) {
 	}
 
 	files := map[string]string{
-		"cv.md":           req.CVContent,
-		"cover-letter.md": req.CoverLetterContent,
-		"job-post.md":     req.JobPostContent,
+		"cv.html":           req.CVContent,
+		"cover-letter.html": req.CoverLetterContent,
+		"job-post.md":       req.JobPostContent,
 	}
 	for name, content := range files {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644); err != nil {
@@ -65,6 +69,8 @@ func CreateApplication(root string, req ApplicationRequest) (string, error) {
 		AppliedDate: req.Date,
 		BaseCVUsed:  req.BaseCVUsed,
 		Notes:       req.Notes,
+		JobURL:      req.JobURL,
+		JobSummary:  req.JobSummary,
 	}
 	metaBytes, err := yaml.Marshal(meta)
 	if err != nil {

@@ -7,12 +7,13 @@
           <th class="text-left px-4 py-3">Company</th>
           <th class="text-left px-4 py-3">Role</th>
           <th class="text-left px-4 py-3">Applied</th>
+          <th class="text-left px-4 py-3">Source</th>
           <th class="text-left px-4 py-3">Status</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         <tr v-if="apps.length === 0">
-          <td colspan="4" class="px-4 py-8 text-center text-gray-400">
+          <td colspan="5" class="px-4 py-8 text-center text-gray-400">
             No applications yet. Use <code>/apply</code> in Claude Code to create one.
           </td>
         </tr>
@@ -25,6 +26,7 @@
           <td class="px-4 py-3 font-medium">{{ app.Company }}</td>
           <td class="px-4 py-3 text-gray-600">{{ app.Role }}</td>
           <td class="px-4 py-3 text-gray-500">{{ app.AppliedDate }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ app.Source || '—' }}</td>
           <td class="px-4 py-3">
             <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="badgeClass(app.CurrentStatus)">
               {{ app.CurrentStatus }}

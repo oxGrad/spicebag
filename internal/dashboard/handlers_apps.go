@@ -59,6 +59,20 @@ func (s *Server) handleAPIAppDetail(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, appDetailResponse{App: app, History: history, ValidStatuses: validStatuses})
 }
 
+func (s *Server) handleAPIAppSourceUpdate(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	source := r.FormValue("source")
+	if err := s.store.UpdateApplicationSource(id, source); err != nil {
+		http.Error(w, fmt.Sprintf("update source: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) handleAPIAppStatusUpdate(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r, "id")
 	if !ok {

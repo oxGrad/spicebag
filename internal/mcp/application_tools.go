@@ -23,6 +23,8 @@ func (s *Server) registerApplicationTools() {
 			mcplib.WithString("job_post_content", mcplib.Required(), mcplib.Description("Markdown content for the job post")),
 			mcplib.WithString("base_cv_used", mcplib.Description("Base CV filename used as source")),
 			mcplib.WithString("notes", mcplib.Description("Optional notes about the application")),
+			mcplib.WithString("job_url", mcplib.Description("Original URL of the job post, if sourced from a URL")),
+			mcplib.WithString("job_summary", mcplib.Description("2-3 sentence summary of the role and key requirements")),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			company := req.GetString("company", "")
@@ -33,6 +35,8 @@ func (s *Server) registerApplicationTools() {
 			jobPostContent := req.GetString("job_post_content", "")
 			baseCVUsed := req.GetString("base_cv_used", "")
 			notes := req.GetString("notes", "")
+			jobURL := req.GetString("job_url", "")
+			jobSummary := req.GetString("job_summary", "")
 
 			folderPath, err := fs.CreateApplication(s.root, fs.ApplicationRequest{
 				Company:            company,
@@ -43,6 +47,8 @@ func (s *Server) registerApplicationTools() {
 				JobPostContent:     jobPostContent,
 				BaseCVUsed:         baseCVUsed,
 				Notes:              notes,
+				JobURL:             jobURL,
+				JobSummary:         jobSummary,
 			})
 			if err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("creating application: %v", err)), nil
@@ -55,6 +61,8 @@ func (s *Server) registerApplicationTools() {
 				BaseCVUsed:  baseCVUsed,
 				Notes:       notes,
 				FolderPath:  folderPath,
+				JobURL:      jobURL,
+				JobSummary:  jobSummary,
 			})
 			if err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("saving application to DB: %v", err)), nil

@@ -16,18 +16,34 @@ async function post(path, body) {
     body: isFormData ? body : new URLSearchParams(body),
   });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
-  return res.json();
+  return res.status === 204 ? null : res.json();
+}
+
+async function del(path) {
+  const res = await fetch(base + path, { method: "DELETE" });
+  if (!res.ok) throw new Error(`DELETE ${path} → ${res.status}`);
 }
 
 export const api = {
+  analytics: {
+    get: () => get("/analytics"),
+  },
+  sources: {
+    list: () => get("/sources"),
+    add: (name) => post("/sources", { name }),
+    delete: (id) => del(`/sources/${id}`),
+  },
   apps: {
     list: () => get("/apps"),
     get: (id) => get(`/apps/${id}`),
     updateStatus: (id, status, notes) =>
       post(`/apps/${id}/status`, { status, notes: notes ?? "" }),
+    updateSource: (id, source) =>
+      post(`/apps/${id}/source`, { source }),
   },
   cv: {
     list: () => get("/cv"),
+    usages: (name) => get(`/cv/${encodeURIComponent(name)}/usages`),
   },
   cl: {
     list: () => get("/cl"),
@@ -45,13 +61,11 @@ export const api = {
   },
   gotenberg: {
     status: () => get("/gotenberg/status"),
-    start: () => post("/gotenberg/start", {}),
-    stop: () => post("/gotenberg/stop", {}),
   },
-  export: (filePath, theme) =>
+  export: (filePath, theme, method = "auto") =>
     fetch("/api/export", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ file_path: filePath, theme }),
+      body: new URLSearchParams({ file_path: filePath, theme, method }),
     }),
 };

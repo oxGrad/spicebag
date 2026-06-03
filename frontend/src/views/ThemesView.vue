@@ -10,8 +10,43 @@
           :key="t"
           class="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
         >
-          <span class="font-medium">{{ t }}</span>
-          <button @click="previewTheme = t" class="text-sm text-blue-600 hover:underline">Preview →</button>
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="font-medium truncate">{{ t }}</span>
+            <span
+              v-if="defaultCV === t"
+              class="shrink-0 text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium"
+            >CV</span>
+            <span
+              v-if="defaultCL === t"
+              class="shrink-0 text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium"
+            >CL</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 ml-3">
+            <div class="relative" @click.stop>
+              <button
+                @click="toggleDropdown(t)"
+                class="text-xs border rounded px-2 py-1 hover:bg-gray-50 flex items-center gap-1"
+              >Set default <span class="text-gray-400">▾</span></button>
+              <div
+                v-if="openDropdown === t"
+                class="absolute right-0 top-full mt-1 z-10 bg-white border rounded shadow-lg min-w-[160px]"
+              >
+                <button @click="setDefault(t, 'cv')" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between">
+                  <span>CV default</span>
+                  <span v-if="defaultCV === t" class="text-blue-600 text-xs">✓</span>
+                </button>
+                <button @click="setDefault(t, 'cl')" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between">
+                  <span>CL default</span>
+                  <span v-if="defaultCL === t" class="text-violet-600 text-xs">✓</span>
+                </button>
+                <div class="border-t my-1"></div>
+                <button @click="setDefault(t, 'both')" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50">
+                  Both
+                </button>
+              </div>
+            </div>
+            <button @click="previewTheme = t; openDropdown = null" class="text-sm text-blue-600 hover:underline">Preview →</button>
+          </div>
         </div>
       </div>
 
@@ -43,14 +78,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { api } from '../api.js'
+import { CV_DEFAULT_KEY, CL_DEFAULT_KEY } from '../theme-defaults.js'
 
 const themes       = ref([])
 const previewTheme = ref('')
 const selectedFile = ref(null)
+const openDropdown = ref(null)
+const defaultCV    = ref(localStorage.getItem(CV_DEFAULT_KEY) ?? '')
+const defaultCL    = ref(localStorage.getItem(CL_DEFAULT_KEY) ?? '')
 
 onMounted(async () => { themes.value = await api.themes.list() })
+
+function toggleDropdown(name) {
+  openDropdown.value = openDropdown.value === name ? null : name
+}
+
+function setDefault(name, target) {
+  if (target === 'cv' || target === 'both') {
+    const next = defaultCV.value === name ? '' : name
+    defaultCV.value = next
+    next ? localStorage.setItem(CV_DEFAULT_KEY, next) : localStorage.removeItem(CV_DEFAULT_KEY)
+  }
+  if (target === 'cl' || target === 'both') {
+    const next = defaultCL.value === name ? '' : name
+    defaultCL.value = next
+    next ? localStorage.setItem(CL_DEFAULT_KEY, next) : localStorage.removeItem(CL_DEFAULT_KEY)
+  }
+  openDropdown.value = null
+}
+
+function closeDropdown(e) {
+  if (!e.target.closest('.relative')) openDropdown.value = null
+}
+
+onMounted(() => document.addEventListener('click', closeDropdown))
+onBeforeUnmount(() => document.removeEventListener('click', closeDropdown))
 
 function onFileChange(e) { selectedFile.value = e.target.files[0] ?? null }
 

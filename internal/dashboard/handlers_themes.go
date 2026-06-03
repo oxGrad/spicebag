@@ -68,6 +68,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 	filePath := r.FormValue("file_path")
 	theme := r.FormValue("theme")
+	method := r.FormValue("method") // "auto" (default), "gotenberg", "chrome"
 
 	if filePath == "" {
 		http.Error(w, "file_path is required", http.StatusBadRequest)
@@ -90,8 +91,15 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	css := s.themeCSS(theme)
-	client := pdf.NewClient(s.cfg.GotenbergURL)
-	pdfBytes, err := client.RenderPDF(string(fragment), css)
+	var pdfBytes []byte
+	switch method {
+	case "chrome":
+		pdfBytes, err = pdf.RenderChrome(string(fragment), css)
+	case "gotenberg":
+		pdfBytes, err = pdf.NewClient(s.cfg.GotenbergURL).RenderPDF(string(fragment), css)
+	default: // "auto" or empty
+		pdfBytes, err = pdf.RenderWithFallback(s.cfg.GotenbergURL, string(fragment), css)
+	}
 	if err != nil {
 		http.Error(w, fmt.Sprintf("render PDF: %v", err), http.StatusInternalServerError)
 		return
