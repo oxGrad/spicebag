@@ -26,18 +26,19 @@
       <div
         v-for="doc in docs"
         :key="doc.key"
-        class="flex items-center border-l-2 transition-colors"
-        :class="!comparing && activeDoc?.key === doc.key ? 'border-blue-500 bg-blue-50/40' : 'border-transparent'"
+        class="flex items-center transition-colors"
+        :class="!comparing && activeDoc?.key === doc.key ? 'bg-blue-50' : ''"
       >
         <button
           @click="selectDoc(doc)"
           class="flex-1 text-left px-5 py-3.5 hover:bg-gray-50 flex items-center justify-between"
+          :class="!comparing && activeDoc?.key === doc.key ? 'hover:bg-blue-50/80' : ''"
         >
           <div>
             <p class="text-sm font-medium" :class="!comparing && activeDoc?.key === doc.key ? 'text-blue-700' : ''">{{ doc.label }}</p>
             <p class="text-xs text-gray-400 mt-0.5">{{ doc.sub }}</p>
           </div>
-          <span v-if="!comparing && activeDoc?.key === doc.key" class="text-xs text-gray-300">▸</span>
+          <span v-if="!comparing && activeDoc?.key === doc.key" class="text-blue-400 text-xs leading-none">●</span>
         </button>
 
         <!-- Compare button: only on Base CV -->
@@ -56,14 +57,17 @@
         <div
           v-for="p in pdfs"
           :key="p.filename"
-          class="flex items-center border-l-2 transition-colors"
-          :class="activeDoc?.key === 'pdf:' + p.filename ? 'border-blue-500 bg-blue-50/40' : 'border-transparent'"
+          class="flex items-center transition-colors"
+          :class="activeDoc?.key === 'pdf:' + p.filename ? 'bg-blue-50' : ''"
         >
-          <button @click="selectPDF(p)" class="flex-1 text-left px-5 py-3 hover:bg-gray-50 flex items-center gap-3">
+          <button @click="selectPDF(p)" class="flex-1 text-left px-5 py-3 flex items-center gap-3"
+            :class="activeDoc?.key === 'pdf:' + p.filename ? 'hover:bg-blue-50/80' : 'hover:bg-gray-50'"
+          >
             <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 shrink-0">PDF</span>
             <p class="text-sm font-medium truncate min-w-0" :class="activeDoc?.key === 'pdf:' + p.filename ? 'text-blue-700' : ''">
               {{ p.filename.replace(/\.pdf$/, '') }}
             </p>
+            <span v-if="activeDoc?.key === 'pdf:' + p.filename" class="text-blue-400 text-xs leading-none ml-auto shrink-0">●</span>
           </button>
         </div>
       </template>
@@ -208,7 +212,14 @@
     <div class="px-5 py-4 border-b flex items-center justify-between">
       <div>
         <h2 class="font-semibold">Application Questions</h2>
-        <p class="text-xs text-gray-400 mt-0.5">Run <code class="bg-gray-100 px-1 rounded">/answer-questions {{ appId }}</code> to generate answers</p>
+        <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+          Run <code class="bg-gray-100 px-1 rounded">/answer-questions {{ appId }}</code> to generate answers
+          <button
+            @click="copyAnswerCmd"
+            class="border rounded px-1.5 py-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors leading-none"
+            title="Copy command"
+          >{{ answerCmdCopied ? '✓' : '⎘' }}</button>
+        </p>
       </div>
     </div>
 
@@ -300,6 +311,7 @@ const newQuestion = ref('')
 const copiedId = ref(null)
 const idCopied = ref(false)
 const bulletEdits = ref({}) // questionId -> string[]
+const answerCmdCopied = ref(false)
 
 const appId = computed(() => route.params.id)
 
@@ -506,6 +518,12 @@ onMounted(async () => {
     previewTheme.value = themeForDoc(docs.value[0])
   }
 })
+
+function copyAnswerCmd() {
+  navigator.clipboard.writeText(`/answer-questions ${appId.value}`)
+  answerCmdCopied.value = true
+  setTimeout(() => { answerCmdCopied.value = false }, 2000)
+}
 
 function copyAppId() {
   navigator.clipboard.writeText(String(appId.value))
