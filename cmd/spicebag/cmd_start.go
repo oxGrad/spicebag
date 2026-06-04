@@ -13,6 +13,7 @@ import (
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/dashboard"
 	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/memory"
 	"github.com/spf13/cobra"
 )
 
@@ -73,9 +74,15 @@ func newStartCmd() *cobra.Command {
 			}
 			defer store.Close()
 
+			mem, err := memory.Open(filepath.Join(root, "memory.db"))
+			if err != nil {
+				return fmt.Errorf("open memory db: %w", err)
+			}
+			defer mem.Close()
+
 			addr := fmt.Sprintf(":%d", cfg.DashboardPort)
 			fmt.Printf("Dashboard running at http://localhost%s\n", addr)
-			return dashboard.NewServer(root, store, cfg).Serve(addr)
+			return dashboard.NewServer(root, store, mem, cfg).Serve(addr)
 		},
 	}
 

@@ -1,7 +1,7 @@
 {
   "name": "spicebag",
   "version": "0.5.0",
-  "description": "Spice Bag — Season every application perfectly. CV, cover letter, and job application manager for Claude Code.",
+  "description": "Spice Bag — Season every application perfectly. CV, cover letter, and job application manager for Claude Code. Memory hook: add 'spicebag memory search' as a UserPromptSubmit hook in ~/.claude/settings.json to enable automatic memory recall.",
   "commands": ["./plugins/skills/"],
   "mcpServers": {
     "spicebag": {

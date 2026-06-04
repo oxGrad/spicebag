@@ -29,7 +29,12 @@ func newMCPCmd() *cobra.Command {
 				return fmt.Errorf("load config: %w", err)
 			}
 
-			srv, err := spicebagmcp.NewServer(root, filepath.Join(root, "spicebag.db"), cfg.GotenbergURL)
+			srv, err := spicebagmcp.NewServer(
+				root,
+				filepath.Join(root, "spicebag.db"),
+				filepath.Join(root, "memory.db"),
+				cfg.GotenbergURL,
+			)
 			if err != nil {
 				return fmt.Errorf("init MCP server: %w", err)
 			}

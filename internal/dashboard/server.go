@@ -10,6 +10,7 @@ import (
 
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/db"
+	memoryPkg "github.com/oxGrad/spicebag/internal/memory"
 )
 
 //go:embed ui
@@ -19,13 +20,14 @@ var uiFS embed.FS
 type Server struct {
 	root  string
 	store *db.Store
+	mem   *memoryPkg.DB
 	cfg   config.Config
 	mux   *http.ServeMux
 }
 
 // NewServer creates a Server and registers all routes.
-func NewServer(root string, store *db.Store, cfg config.Config) *Server {
-	s := &Server{root: root, store: store, cfg: cfg, mux: http.NewServeMux()}
+func NewServer(root string, store *db.Store, mem *memoryPkg.DB, cfg config.Config) *Server {
+	s := &Server{root: root, store: store, mem: mem, cfg: cfg, mux: http.NewServeMux()}
 	s.routes()
 	return s
 }
@@ -84,6 +86,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/stats", s.handleAPIStats)
 
 	s.mux.HandleFunc("GET /api/gotenberg/status", s.handleAPIGotenbergStatus)
+
+	s.mux.HandleFunc("GET /api/memories", s.handleAPIMemoriesList)
+	s.mux.HandleFunc("GET /api/memories/{name}", s.handleAPIMemoriesGet)
 
 	s.mux.HandleFunc("/", s.handleSPA)
 }
