@@ -118,6 +118,20 @@ func TestGetByName(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestSearchFTS5Operators(t *testing.T) {
+	db := openTestDB(t)
+
+	require.NoError(t, db.Write(&memory.Memory{
+		Name: "m1", Type: "feedback", Description: "about operators", Body: "use AND or OR logic",
+	}))
+
+	// Should not panic or error — prompt contains FTS5 operator words
+	results, err := db.Search("Should I use AND or OR in this query?", 5)
+	require.NoError(t, err)
+	// "AND" and "OR" in the prompt should match the body containing "AND" and "OR"
+	assert.NotEmpty(t, results)
+}
+
 func TestUpdatedAtChangesOnUpsert(t *testing.T) {
 	db := openTestDB(t)
 

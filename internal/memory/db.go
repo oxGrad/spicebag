@@ -122,11 +122,11 @@ func (d *DB) Search(query string, limit int) ([]*Memory, error) {
 	if len(words) == 0 {
 		return nil, nil
 	}
-	prefixed := make([]string, len(words))
+	quoted := make([]string, len(words))
 	for i, w := range words {
-		prefixed[i] = w + "*"
+		quoted[i] = `"` + strings.ReplaceAll(w, `"`, `""`) + `"*`
 	}
-	ftsQuery := strings.Join(prefixed, " OR ")
+	ftsQuery := strings.Join(quoted, " OR ")
 	rows, err := d.db.Query(`
 		SELECT m.name, m.type, m.description, m.body, m.created_at, m.updated_at
 		FROM memories m

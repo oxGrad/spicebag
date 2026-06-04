@@ -3,6 +3,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -81,7 +82,94 @@ func runInit(root string, w io.Writer) error {
 		}
 	}
 
+	home, _ := os.UserHomeDir()
+	settingsPath := filepath.Join(home, ".claude", "settings.json")
+	if err := ensureMemoryHook(settingsPath); err != nil {
+		fmt.Fprintf(w, "Warning: could not install memory hook in %s: %v\n", settingsPath, err)
+	} else {
+		fmt.Fprintln(w, "Ensured memory search hook in", settingsPath)
+	}
+
 	return nil
+}
+
+const memoryHookCommand = "spicebag memory search"
+
+// ensureMemoryHook reads ~/.claude/settings.json (creating it if absent) and
+// appends the spicebag memory search hook to hooks.UserPromptSubmit if it is
+// not already present. The operation is idempotent.
+func ensureMemoryHook(settingsPath string) error {
+	var settings map[string]any
+
+	data, err := os.ReadFile(settingsPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		settings = map[string]any{}
+	} else {
+		if err := json.Unmarshal(data, &settings); err != nil {
+			return fmt.Errorf("parse %s: %w", settingsPath, err)
+		}
+	}
+
+	// Navigate / create hooks.UserPromptSubmit
+	hooksRaw, _ := settings["hooks"]
+	hooksMap, ok := hooksRaw.(map[string]any)
+	if !ok {
+		hooksMap = map[string]any{}
+	}
+
+	upsRaw, _ := hooksMap["UserPromptSubmit"]
+	ups, ok := upsRaw.([]any)
+	if !ok {
+		ups = []any{}
+	}
+
+	// Check if our hook is already present anywhere in the list.
+	for _, entryRaw := range ups {
+		entry, ok := entryRaw.(map[string]any)
+		if !ok {
+			continue
+		}
+		hooksListRaw, _ := entry["hooks"]
+		hooksList, ok := hooksListRaw.([]any)
+		if !ok {
+			continue
+		}
+		for _, hRaw := range hooksList {
+			h, ok := hRaw.(map[string]any)
+			if !ok {
+				continue
+			}
+			if cmd, _ := h["command"].(string); cmd == memoryHookCommand {
+				return nil // already installed
+			}
+		}
+	}
+
+	// Append the new hook entry.
+	newEntry := map[string]any{
+		"matcher": "",
+		"hooks": []any{
+			map[string]any{
+				"type":    "command",
+				"command": memoryHookCommand,
+			},
+		},
+	}
+	ups = append(ups, newEntry)
+	hooksMap["UserPromptSubmit"] = ups
+	settings["hooks"] = hooksMap
+
+	out, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(settingsPath, out, 0o644)
 }
 
 func spicebagRoot() string {
