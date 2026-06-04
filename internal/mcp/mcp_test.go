@@ -28,7 +28,8 @@ func setup(t *testing.T) (string, *prospectormcp.Server) {
 	require.NoError(t, os.WriteFile(filepath.Join(themeDir, "minimal.css"), []byte("body{}"), 0644))
 
 	dbPath := filepath.Join(root, "prospector.db")
-	srv, err := prospectormcp.NewServer(root, dbPath, "http://localhost:3000")
+	memPath := filepath.Join(root, "memory.db")
+	srv, err := prospectormcp.NewServer(root, dbPath, memPath, "http://localhost:3000")
 	require.NoError(t, err)
 	t.Cleanup(func() { srv.Close() })
 	return root, srv
@@ -97,6 +98,52 @@ func TestCreateApplicationTool(t *testing.T) {
 
 	_, statErr := os.Stat(filepath.Join(root, "applications", "stripe", "backend-engineer", "2025-06-01", "cv.html"))
 	require.NoError(t, statErr)
+}
+
+func TestMemoryWriteTool(t *testing.T) {
+	_, srv := setup(t)
+	result, err := srv.CallTool(context.Background(), "memory_write", map[string]any{
+		"name":        "feedback-terse",
+		"type":        "feedback",
+		"description": "User prefers terse responses",
+		"body":        "No trailing summaries. Why: redundant. How to apply: end after result.",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, result, "feedback-terse")
+}
+
+func TestMemorySearchTool(t *testing.T) {
+	_, srv := setup(t)
+	_, err := srv.CallTool(context.Background(), "memory_write", map[string]any{
+		"name": "u1", "type": "user", "description": "SRE background", "body": "8 years kubernetes",
+	})
+	require.NoError(t, err)
+
+	result, err := srv.CallTool(context.Background(), "memory_search", map[string]any{
+		"query": "kubernetes",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, result, "u1")
+}
+
+func TestMemoryDeleteTool(t *testing.T) {
+	_, srv := setup(t)
+	_, err := srv.CallTool(context.Background(), "memory_write", map[string]any{
+		"name": "del", "type": "reference", "description": "temp", "body": "to be deleted",
+	})
+	require.NoError(t, err)
+
+	result, err := srv.CallTool(context.Background(), "memory_delete", map[string]any{
+		"name": "del",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, result, "del")
+
+	result, err = srv.CallTool(context.Background(), "memory_search", map[string]any{
+		"query": "to be deleted",
+	})
+	require.NoError(t, err)
+	assert.NotContains(t, result, "del")
 }
 
 // helper to avoid importing mcp package in every test

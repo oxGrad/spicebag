@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/oxGrad/spicebag/internal/db"
+	"github.com/oxGrad/spicebag/internal/memory"
 	"github.com/mark3labs/mcp-go/client"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -14,19 +15,27 @@ import (
 type Server struct {
 	root   string
 	store  *db.Store
+	mem    *memory.DB
 	gotURL string
 	mcpSrv *server.MCPServer
 }
 
-func NewServer(root, dbPath, gotenbergURL string) (*Server, error) {
+func NewServer(root, dbPath, memoryDBPath, gotenbergURL string) (*Server, error) {
 	store, err := db.Open(dbPath)
 	if err != nil {
+		return nil, err
+	}
+
+	mem, err := memory.Open(memoryDBPath)
+	if err != nil {
+		store.Close()
 		return nil, err
 	}
 
 	s := &Server{
 		root:   root,
 		store:  store,
+		mem:    mem,
 		gotURL: gotenbergURL,
 		mcpSrv: server.NewMCPServer("spicebag", "1.0.0"),
 	}
@@ -38,6 +47,7 @@ func NewServer(root, dbPath, gotenbergURL string) (*Server, error) {
 	s.registerExperienceTools()
 	s.registerApplicationTools()
 	s.registerQuestionTools()
+	s.registerMemoryTools()
 
 	return s, nil
 }
@@ -46,7 +56,10 @@ func (s *Server) ServeStdio() error {
 	return server.ServeStdio(s.mcpSrv)
 }
 
-func (s *Server) Close() { s.store.Close() }
+func (s *Server) Close() {
+	s.store.Close()
+	s.mem.Close()
+}
 
 // Store returns the underlying DB store. Used in tests for seeding data
 // without opening a second connection (SQLite allows only one writer).
