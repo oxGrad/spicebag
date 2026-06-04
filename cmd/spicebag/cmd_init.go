@@ -23,6 +23,13 @@ func newInitCmd() *cobra.Command {
 			if err := runInit(spicebagRoot(), os.Stdout); err != nil {
 				return err
 			}
+			cwd, _ := os.Getwd()
+			settingsPath := filepath.Join(cwd, ".claude", "settings.local.json")
+			if err := ensureMemoryHook(settingsPath); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not install memory hook in %s: %v\n", settingsPath, err)
+			} else {
+				fmt.Println("Ensured memory search hook in", settingsPath)
+			}
 			fmt.Println("\nRun `spicebag start` to open the dashboard.")
 			return nil
 		},
@@ -82,22 +89,14 @@ func runInit(root string, w io.Writer) error {
 		}
 	}
 
-	home, _ := os.UserHomeDir()
-	settingsPath := filepath.Join(home, ".claude", "settings.json")
-	if err := ensureMemoryHook(settingsPath); err != nil {
-		fmt.Fprintf(w, "Warning: could not install memory hook in %s: %v\n", settingsPath, err)
-	} else {
-		fmt.Fprintln(w, "Ensured memory search hook in", settingsPath)
-	}
-
 	return nil
 }
 
 const memoryHookCommand = "spicebag memory search"
 
-// ensureMemoryHook reads ~/.claude/settings.json (creating it if absent) and
-// appends the spicebag memory search hook to hooks.UserPromptSubmit if it is
-// not already present. The operation is idempotent.
+// ensureMemoryHook reads a Claude settings JSON file (creating it if absent)
+// and appends the spicebag memory search hook to hooks.UserPromptSubmit if it
+// is not already present. The operation is idempotent.
 func ensureMemoryHook(settingsPath string) error {
 	var settings map[string]any
 
