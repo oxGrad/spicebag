@@ -65,6 +65,26 @@ func (s *Server) Close() {
 // without opening a second connection (SQLite allows only one writer).
 func (s *Server) Store() *db.Store { return s.store }
 
+// ListTools returns the names and descriptions of all registered MCP tools.
+func (s *Server) ListTools(ctx context.Context) ([]mcplib.Tool, error) {
+	c, err := client.NewInProcessClient(s.mcpSrv)
+	if err != nil {
+		return nil, fmt.Errorf("creating in-process client: %w", err)
+	}
+	defer c.Close()
+	initReq := mcplib.InitializeRequest{}
+	initReq.Params.ProtocolVersion = mcplib.LATEST_PROTOCOL_VERSION
+	initReq.Params.ClientInfo = mcplib.Implementation{Name: "spicebag", Version: "1.0.0"}
+	if _, err := c.Initialize(ctx, initReq); err != nil {
+		return nil, fmt.Errorf("initializing client: %w", err)
+	}
+	result, err := c.ListTools(ctx, mcplib.ListToolsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return result.Tools, nil
+}
+
 // CallTool is used in tests to invoke a tool directly via the in-process client.
 func (s *Server) CallTool(ctx context.Context, name string, args map[string]any) (string, error) {
 	c, err := client.NewInProcessClient(s.mcpSrv)
