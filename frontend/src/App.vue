@@ -26,6 +26,10 @@
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
       >Experience</RouterLink>
+      <RouterLink to="/memory"
+        active-class="bg-white/10 text-white font-medium"
+        class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
+      >Memory</RouterLink>
       <RouterLink to="/themes"
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"

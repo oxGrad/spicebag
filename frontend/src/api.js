@@ -82,6 +82,10 @@ export const api = {
   gotenberg: {
     status: () => get("/gotenberg/status"),
   },
+  memory: {
+    list: () => get("/memories"),
+    get: (name) => get(`/memories/${encodeURIComponent(name)}`),
+  },
   export: (filePath, theme, method = "auto") =>
     fetch("/api/export", {
       method: "POST",
