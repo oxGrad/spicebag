@@ -10,7 +10,8 @@ import (
 	"github.com/oxGrad/spicebag/internal/db"
 )
 
-var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted"}
+// skipped = generated docs but decided not to apply; excluded from analytics.
+var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted", "skipped"}
 
 func isValidStatus(s string) bool { return slices.Contains(validStatuses, s) }
 
@@ -98,4 +99,17 @@ func (s *Server) handleAPIAppStatusUpdate(w http.ResponseWriter, r *http.Request
 		history = []db.StatusHistoryEntry{}
 	}
 	writeJSON(w, history)
+}
+
+func (s *Server) handleAPIAppsDelete(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	if err := s.store.DeleteApplication(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

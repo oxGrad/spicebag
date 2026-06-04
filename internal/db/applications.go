@@ -182,6 +182,16 @@ func (s *Store) GetApplicationByID(id int64) (Application, error) {
 	return a, err
 }
 
+// DeleteApplication removes an application and all its status history.
+func (s *Store) DeleteApplication(id int64) error {
+	_, err := s.db.Exec(`DELETE FROM application_status_history WHERE application_id = ?`, id)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`DELETE FROM applications WHERE id = ?`, id)
+	return err
+}
+
 // parseFlexDate accepts YYYY-MM-DD or YYYY-MM.
 func parseFlexDate(s string) (time.Time, error) {
 	if t, err := time.Parse("2006-01-02", s); err == nil {

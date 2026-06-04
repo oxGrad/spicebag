@@ -1,6 +1,11 @@
 <template>
-  <div class="mb-4">
+  <div class="mb-4 flex items-center justify-between">
     <RouterLink to="/apps" class="text-blue-600 hover:underline text-sm">← Applications</RouterLink>
+    <button
+      v-if="detail"
+      @click="deleteApp"
+      class="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300 rounded px-2 py-1 transition-colors"
+    >Delete application</button>
   </div>
   <div v-if="detail" class="mb-5">
     <h1 class="text-2xl font-bold">{{ detail.app.Company }}</h1>
@@ -314,11 +319,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api.js'
 import { CV_DEFAULT_KEY, CL_DEFAULT_KEY, getDefaultTheme } from '../theme-defaults.js'
 
 const route = useRoute()
+const router = useRouter()
 
 const appTabs = [
   { id: 'documents', label: 'Documents' },
@@ -630,8 +636,15 @@ function badgeClass(status) {
     rejected:   'bg-red-100 text-red-800',
     withdrawn:  'bg-red-100 text-red-800',
     ghosted:    'bg-red-100 text-red-800',
+    skipped:    'bg-gray-100 text-gray-500',
   }
   return map[status?.toLowerCase()] ?? 'bg-blue-100 text-blue-800'
+}
+
+async function deleteApp() {
+  if (!confirm(`Delete ${detail.value.app.Company} — ${detail.value.app.Role}? This cannot be undone.`)) return
+  await api.apps.delete(appId.value)
+  router.push('/apps')
 }
 </script>
 

@@ -60,6 +60,7 @@ export const api = {
       fetch(`/api/apps/${id}/questions/${qid}`, { method: 'DELETE' }),
     exportPDF: (id, docType, theme) =>
       post(`/apps/${id}/pdf`, { doc_type: docType, theme: theme ?? '' }),
+    delete: (id) => del(`/apps/${id}`),
   },
   cv: {
     list: () => get("/cv"),

@@ -18,6 +18,10 @@ func (s *Store) ApplicationsPerMonth() ([]MonthCount, error) {
 	rows, err := s.db.Query(`
 		SELECT strftime('%Y-%m', applied_date) AS month, COUNT(*) AS count
 		FROM applications
+		WHERE id NOT IN (
+			SELECT DISTINCT application_id FROM application_status_history
+			WHERE status = 'skipped'
+		)
 		GROUP BY month
 		ORDER BY month DESC
 		LIMIT 12
@@ -60,6 +64,7 @@ func (s *Store) SourceStats() ([]SourceStat, error) {
 				) AS cs
 			FROM applications a
 		)
+		WHERE cs != 'skipped'
 		GROUP BY src
 		ORDER BY total DESC
 	`)

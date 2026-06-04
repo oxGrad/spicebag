@@ -63,6 +63,7 @@ func (s *Server) routes() {
 
 	s.mux.HandleFunc("GET /api/apps", s.handleAPIAppsList)
 	s.mux.HandleFunc("GET /api/apps/{id}", s.handleAPIAppDetail)
+	s.mux.HandleFunc("DELETE /api/apps/{id}", s.handleAPIAppsDelete)
 	s.mux.HandleFunc("POST /api/apps/{id}/status", s.handleAPIAppStatusUpdate)
 	s.mux.HandleFunc("POST /api/apps/{id}/source", s.handleAPIAppSourceUpdate)
 	s.mux.HandleFunc("GET /api/apps/{id}/pdfs", s.handleAPIAppListPDFs)
