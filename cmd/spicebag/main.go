@@ -19,6 +19,7 @@ func main() {
 		newMCPCmd(),
 		newStartCmd(),
 		newStopCmd(),
+		newMemoryCmd(),
 	)
 
 	if err := root.Execute(); err != nil {
