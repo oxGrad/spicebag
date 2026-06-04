@@ -1,6 +1,20 @@
 <template>
-  <h1 class="text-2xl font-bold mb-6">Themes</h1>
-  <div class="grid grid-cols-2 gap-6">
+  <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+  <div class="flex gap-0 border-b border-gray-200 mb-6">
+    <button
+      v-for="tab in tabs"
+      :key="tab.id"
+      @click="activeTab = tab.id"
+      class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors"
+      :class="activeTab === tab.id
+        ? 'border-gray-900 text-gray-900'
+        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+    >{{ tab.label }}</button>
+  </div>
+
+  <!-- Themes tab -->
+  <div v-if="activeTab === 'themes'" class="grid grid-cols-2 gap-6">
     <div>
       <h2 class="font-semibold mb-3">Available Themes</h2>
       <div class="bg-white rounded-lg shadow divide-y mb-6">
@@ -75,13 +89,58 @@
       </div>
     </div>
   </div>
+
+  <!-- Sources tab -->
+  <div v-if="activeTab === 'sources'" class="max-w-md space-y-6">
+    <div class="bg-white rounded-lg shadow divide-y">
+      <div v-if="sources.length === 0" class="px-4 py-8 text-center text-gray-400 text-sm">No sources yet.</div>
+      <div
+        v-for="src in sources"
+        :key="src.id"
+        class="flex items-center justify-between px-4 py-3"
+      >
+        <span class="text-sm">{{ src.name }}</span>
+        <button
+          @click="removeSource(src.id)"
+          class="text-xs text-red-400 hover:text-red-600"
+        >Remove</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="font-semibold text-sm mb-3">Add Source</h2>
+      <form class="flex gap-2" @submit.prevent="addSource">
+        <input
+          v-model="newSourceName"
+          type="text"
+          placeholder="e.g. AngelList"
+          class="flex-1 border rounded px-3 py-1.5 text-sm"
+        >
+        <button
+          type="submit"
+          :disabled="!newSourceName.trim()"
+          class="bg-blue-600 text-white rounded px-3 py-1.5 text-sm hover:bg-blue-700 disabled:opacity-50"
+        >Add</button>
+      </form>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import { CV_DEFAULT_KEY, CL_DEFAULT_KEY } from '../theme-defaults.js'
 
+const route = useRoute()
+
+const tabs = [
+  { id: 'themes', label: 'Themes' },
+  { id: 'sources', label: 'Sources' },
+]
+const activeTab = ref(route.query.tab === 'sources' ? 'sources' : 'themes')
+
+// Themes state
 const themes       = ref([])
 const previewTheme = ref('')
 const selectedFile = ref(null)
@@ -89,7 +148,14 @@ const openDropdown = ref(null)
 const defaultCV    = ref(localStorage.getItem(CV_DEFAULT_KEY) ?? '')
 const defaultCL    = ref(localStorage.getItem(CL_DEFAULT_KEY) ?? '')
 
-onMounted(async () => { themes.value = await api.themes.list() })
+// Sources state
+const sources     = ref([])
+const newSourceName = ref('')
+
+onMounted(async () => {
+  themes.value  = await api.themes.list()
+  sources.value = await api.sources.list()
+})
 
 function toggleDropdown(name) {
   openDropdown.value = openDropdown.value === name ? null : name
@@ -123,5 +189,17 @@ async function upload() {
   await api.themes.upload(selectedFile.value)
   themes.value = await api.themes.list()
   selectedFile.value = null
+}
+
+async function addSource() {
+  if (!newSourceName.value.trim()) return
+  await api.sources.add(newSourceName.value.trim())
+  sources.value = await api.sources.list()
+  newSourceName.value = ''
+}
+
+async function removeSource(id) {
+  await api.sources.delete(id)
+  sources.value = sources.value.filter(s => s.id !== id)
 }
 </script>

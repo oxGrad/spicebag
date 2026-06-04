@@ -18,10 +18,6 @@
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
       >CVs</RouterLink>
-      <RouterLink to="/cl"
-        active-class="bg-white/10 text-white font-medium"
-        class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
-      >Cover Letters</RouterLink>
       <RouterLink to="/stats"
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
@@ -30,16 +26,10 @@
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
       >Memory</RouterLink>
-      <RouterLink to="/themes"
+      <RouterLink to="/settings"
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
-      >Themes</RouterLink>
-      <div class="mt-auto border-t border-white/10 pt-3">
-        <RouterLink to="/sources"
-          active-class="bg-white/10 text-gray-300 font-medium"
-          class="px-2.5 py-2 rounded-md text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors block"
-        >Sources</RouterLink>
-      </div>
+      >Settings</RouterLink>
     </nav>
     <main class="ml-52 flex-1 p-8 min-w-0">
       <RouterView />

@@ -16,7 +16,25 @@
     </div>
   </div>
 
-  <div v-if="detail" class="grid grid-cols-2 gap-6 mb-6">
+  <div v-if="detail" class="flex gap-0 border-b border-gray-200 mb-6">
+    <button
+      v-for="tab in appTabs"
+      :key="tab.id"
+      @click="activeSection = tab.id"
+      class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors"
+      :class="activeSection === tab.id
+        ? 'border-gray-900 text-gray-900'
+        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+    >
+      {{ tab.label }}
+      <span
+        v-if="tab.id === 'questions' && questions.length > 0"
+        class="ml-1.5 text-xs bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5 font-normal"
+      >{{ questions.length }}</span>
+    </button>
+  </div>
+
+  <div v-if="detail && activeSection === 'documents'" class="grid grid-cols-2 gap-6 mb-6">
     <!-- Left: Documents -->
     <div class="bg-white rounded-lg shadow divide-y">
       <div class="px-5 py-4">
@@ -27,26 +45,28 @@
         v-for="doc in docs"
         :key="doc.key"
         class="flex items-center transition-colors"
-        :class="!comparing && activeDoc?.key === doc.key ? 'bg-blue-50' : ''"
+        :class="docIsActive(doc) ? 'bg-blue-50' : ''"
       >
         <button
           @click="selectDoc(doc)"
-          class="flex-1 text-left px-5 py-3.5 hover:bg-gray-50 flex items-center justify-between"
-          :class="!comparing && activeDoc?.key === doc.key ? 'hover:bg-blue-50/80' : ''"
+          class="flex-1 text-left px-5 py-3.5 flex items-center justify-between"
+          :class="docIsActive(doc) ? 'hover:bg-blue-50/80' : 'hover:bg-gray-50'"
         >
           <div>
-            <p class="text-sm font-medium" :class="!comparing && activeDoc?.key === doc.key ? 'text-blue-700' : ''">{{ doc.label }}</p>
+            <p class="text-sm font-medium" :class="docIsActive(doc) ? 'text-blue-700' : ''">{{ doc.label }}</p>
             <p class="text-xs text-gray-400 mt-0.5">{{ doc.sub }}</p>
           </div>
-          <span v-if="!comparing && activeDoc?.key === doc.key" class="text-blue-400 text-xs leading-none">●</span>
+          <span v-if="docIsActive(doc) && !comparing" class="text-blue-400 text-xs leading-none">●</span>
         </button>
 
         <!-- Compare button: only on Base CV -->
         <button
           v-if="doc.key === 'base'"
           @click="startCompare"
-          class="mr-4 px-2.5 py-1 text-xs border rounded hover:bg-gray-50 text-gray-500 hover:text-gray-700 shrink-0"
-          :class="comparing ? 'border-blue-400 text-blue-600 bg-blue-50' : ''"
+          class="mr-4 px-2.5 py-1 text-xs border rounded shrink-0 transition-colors"
+          :class="comparing
+            ? 'border-gray-800 bg-gray-800 text-white'
+            : 'border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 hover:bg-gray-50'"
           title="Compare base CV with tailored CV"
         >Compare</button>
       </div>
@@ -122,7 +142,8 @@
     </div>
   </div>
 
-  <!-- Compare view -->
+  <!-- Compare view (Documents tab) -->
+  <template v-if="activeSection === 'documents'">
   <div v-if="comparing" class="bg-white rounded-lg shadow overflow-hidden">
     <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
       <div class="flex items-center gap-6 text-sm">
@@ -206,9 +227,10 @@
       :title="activeDoc.label"
     />
   </div>
+  </template>
 
-  <!-- Questions & Answers -->
-  <div v-if="detail" class="mt-6 bg-white rounded-lg shadow overflow-hidden">
+  <!-- Questions tab -->
+  <div v-if="detail && activeSection === 'questions'" class="bg-white rounded-lg shadow overflow-hidden">
     <div class="px-5 py-4 border-b flex items-center justify-between">
       <div>
         <h2 class="font-semibold">Application Questions</h2>
@@ -297,6 +319,13 @@ import { api } from '../api.js'
 import { CV_DEFAULT_KEY, CL_DEFAULT_KEY, getDefaultTheme } from '../theme-defaults.js'
 
 const route = useRoute()
+
+const appTabs = [
+  { id: 'documents', label: 'Documents' },
+  { id: 'questions', label: 'Questions' },
+]
+const activeSection = ref('documents')
+
 const detail = ref(null)
 const newStatus = ref('')
 const newNotes = ref('')
@@ -336,6 +365,10 @@ const rightIframeRef = ref(null)
 let leftLoaded = false
 let rightLoaded = false
 let syncingScroll = false
+
+function docIsActive(doc) {
+  return (comparing.value && doc.key === 'base') || (!comparing.value && activeDoc.value?.key === doc.key)
+}
 
 function themeForDoc(doc) {
   return doc.key === 'cl' ? getDefaultTheme(CL_DEFAULT_KEY) : getDefaultTheme(CV_DEFAULT_KEY)
