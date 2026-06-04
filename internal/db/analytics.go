@@ -14,18 +14,29 @@ type SourceStat struct {
 	DropRate    float64 `json:"drop_rate"` // % that never moved past applied/unknown/ghosted
 }
 
-func (s *Store) ApplicationsPerMonth() ([]MonthCount, error) {
-	rows, err := s.db.Query(`
+// ApplicationsPerMonth returns application counts grouped by month.
+// from and to are optional YYYY-MM strings; empty = no constraint.
+func (s *Store) ApplicationsPerMonth(from, to string) ([]MonthCount, error) {
+	q := `
 		SELECT strftime('%Y-%m', applied_date) AS month, COUNT(*) AS count
 		FROM applications
 		WHERE id NOT IN (
 			SELECT DISTINCT application_id FROM application_status_history
 			WHERE status = 'skipped'
 		)
-		GROUP BY month
-		ORDER BY month DESC
-		LIMIT 12
-	`)
+	`
+	var args []any
+	if from != "" {
+		q += ` AND strftime('%Y-%m', applied_date) >= ?`
+		args = append(args, from)
+	}
+	if to != "" {
+		q += ` AND strftime('%Y-%m', applied_date) <= ?`
+		args = append(args, to)
+	}
+	q += ` GROUP BY month ORDER BY month ASC`
+
+	rows, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -39,15 +50,24 @@ func (s *Store) ApplicationsPerMonth() ([]MonthCount, error) {
 		}
 		result = append(result, m)
 	}
-	// Return in chronological order for charts.
-	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
-		result[i], result[j] = result[j], result[i]
-	}
 	return result, rows.Err()
 }
 
-func (s *Store) SourceStats() ([]SourceStat, error) {
-	rows, err := s.db.Query(`
+// SourceStats returns per-source funnel statistics.
+// from and to are optional YYYY-MM strings; empty = no constraint.
+func (s *Store) SourceStats(from, to string) ([]SourceStat, error) {
+	dateFilter := ""
+	var args []any
+	if from != "" {
+		dateFilter += ` AND strftime('%Y-%m', a.applied_date) >= ?`
+		args = append(args, from)
+	}
+	if to != "" {
+		dateFilter += ` AND strftime('%Y-%m', a.applied_date) <= ?`
+		args = append(args, to)
+	}
+
+	q := `
 		SELECT
 			CASE WHEN source = '' THEN 'Unknown' ELSE source END AS src,
 			COUNT(*) AS total,
@@ -63,11 +83,14 @@ func (s *Store) SourceStats() ([]SourceStat, error) {
 					'unknown'
 				) AS cs
 			FROM applications a
+			WHERE 1=1` + dateFilter + `
 		)
 		WHERE cs != 'skipped'
 		GROUP BY src
 		ORDER BY total DESC
-	`)
+	`
+
+	rows, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}

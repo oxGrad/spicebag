@@ -12,12 +12,15 @@ type analyticsResponse struct {
 }
 
 func (s *Server) handleAPIAnalytics(w http.ResponseWriter, r *http.Request) {
-	months, err := s.store.ApplicationsPerMonth()
+	from := r.URL.Query().Get("from") // YYYY-MM, empty = no constraint
+	to := r.URL.Query().Get("to")     // YYYY-MM, empty = no constraint
+
+	months, err := s.store.ApplicationsPerMonth(from, to)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	sources, err := s.store.SourceStats()
+	sources, err := s.store.SourceStats(from, to)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

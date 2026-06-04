@@ -1,7 +1,42 @@
 <template>
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold">Overview</h1>
-    <span class="text-sm text-gray-400">{{ currentMonthLabel }}</span>
+  <!-- Header + filter -->
+  <div class="flex items-start justify-between mb-6 gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Overview</h1>
+      <p class="text-sm text-gray-400 mt-0.5">{{ rangeLabel }}</p>
+    </div>
+
+    <div class="flex flex-col items-end gap-2 shrink-0">
+      <!-- Preset pills -->
+      <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <button
+          v-for="p in presets"
+          :key="p.id"
+          @click="preset = p.id"
+          class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+          :class="preset === p.id
+            ? 'bg-white shadow-sm text-gray-900'
+            : 'text-gray-500 hover:text-gray-700'"
+        >{{ p.label }}</button>
+      </div>
+
+      <!-- Custom range inputs (shown only when custom preset active) -->
+      <div v-if="preset === 'custom'" class="flex items-center gap-2">
+        <input
+          v-model="customFrom"
+          type="month"
+          class="border rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          :max="customTo || undefined"
+        >
+        <span class="text-gray-400 text-sm">—</span>
+        <input
+          v-model="customTo"
+          type="month"
+          class="border rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          :min="customFrom || undefined"
+        >
+      </div>
+    </div>
   </div>
 
   <!-- Loading skeleton -->
@@ -30,7 +65,7 @@
         <div class="pr-5">
           <p class="text-2xl font-semibold tabular-nums">{{ funnel.total }}</p>
           <p class="text-sm text-gray-500 mt-0.5">Applied</p>
-          <p class="text-xs text-gray-400 mt-1">{{ thisMonth }} this month</p>
+          <p v-if="preset === 'all'" class="text-xs text-gray-400 mt-1">{{ thisMonth }} this month</p>
         </div>
         <div class="px-5">
           <p class="text-2xl font-semibold tabular-nums" :class="funnel.total === 0 ? 'text-gray-200' : ''">{{ funnel.responded }}</p>
@@ -56,7 +91,7 @@
     <!-- Applications per month -->
     <div class="bg-white rounded-lg shadow p-5">
       <h2 class="font-semibold mb-4">Applications by month</h2>
-      <div v-if="data.per_month.length === 0" class="text-gray-400 text-sm">No data yet.</div>
+      <div v-if="data.per_month.length === 0" class="text-gray-400 text-sm">No data for this period.</div>
       <div v-else class="space-y-2">
         <RouterLink
           v-for="m in data.per_month"
@@ -128,31 +163,89 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { api } from '../api.js'
 
-const data = ref(null)
+const data    = ref(null)
 const loading = ref(true)
-const error = ref(null)
+const error   = ref(null)
 
-const currentMonthLabel = computed(() =>
-  new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-)
+// --- Filter state ---
+const presets = [
+  { id: 'all',    label: 'All time' },
+  { id: '6m',     label: '6 months' },
+  { id: '3m',     label: '3 months' },
+  { id: '1m',     label: 'This month' },
+  { id: 'custom', label: 'Custom' },
+]
+const preset     = ref('all')
+const customFrom = ref('')
+const customTo   = ref('')
 
+function ymNow() {
+  return new Date().toISOString().slice(0, 7)
+}
+
+function ymOffset(monthsAgo) {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() - monthsAgo)
+  return d.toISOString().slice(0, 7)
+}
+
+const filterRange = computed(() => {
+  switch (preset.value) {
+    case 'all': return { from: '', to: '' }
+    case '6m':  return { from: ymOffset(5), to: ymNow() }
+    case '3m':  return { from: ymOffset(2), to: ymNow() }
+    case '1m':  return { from: ymNow(), to: ymNow() }
+    case 'custom': return { from: customFrom.value, to: customTo.value }
+    default:    return { from: '', to: '' }
+  }
+})
+
+function formatMonthShort(ym) {
+  const [y, m] = ym.split('-')
+  return new Date(+y, +m - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+function formatMonthAbbr(ym) {
+  const [y, m] = ym.split('-')
+  return new Date(+y, +m - 1).toLocaleDateString('en-US', { month: 'short' })
+}
+
+const rangeLabel = computed(() => {
+  const { from, to } = filterRange.value
+  if (!from && !to) return 'All time'
+  if (from && to && from === to) return formatMonthShort(from)
+  if (from && to) {
+    const fromYear = from.slice(0, 4)
+    const toYear   = to.slice(0, 4)
+    if (fromYear === toYear) {
+      return `${formatMonthAbbr(from)} — ${formatMonthShort(to)}`
+    }
+    return `${formatMonthShort(from)} — ${formatMonthShort(to)}`
+  }
+  if (from) return `from ${formatMonthShort(from)}`
+  return `up to ${formatMonthShort(to)}`
+})
+
+// --- Derived data ---
 const thisMonth = computed(() => {
   if (!data.value) return 0
-  const ym = new Date().toISOString().slice(0, 7)
+  const ym = ymNow()
   return data.value.per_month.find(m => m.month === ym)?.count ?? 0
 })
 
 const funnel = computed(() => {
   const ss = data.value?.source_stats ?? []
-  const total = ss.reduce((s, r) => s + r.total, 0)
-  const responded = ss.reduce((s, r) => s + r.responded, 0)
+  const total      = ss.reduce((s, r) => s + r.total, 0)
+  const responded  = ss.reduce((s, r) => s + r.responded, 0)
   const interviewed = ss.reduce((s, r) => s + r.interviewed, 0)
-  const offered = ss.reduce((s, r) => s + r.offered, 0)
+  const offered    = ss.reduce((s, r) => s + r.offered, 0)
   const p = (n) => total ? Math.round((n / total) * 100) : 0
-  return { total, responded, interviewed, offered, respondedPct: p(responded), interviewedPct: p(interviewed), offeredPct: p(offered) }
+  return { total, responded, interviewed, offered,
+    respondedPct: p(responded), interviewedPct: p(interviewed), offeredPct: p(offered) }
 })
 
 const maxCount = computed(() =>
@@ -196,7 +289,8 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    data.value = await api.analytics.get()
+    const { from, to } = filterRange.value
+    data.value = await api.analytics.get(from, to)
   } catch {
     error.value = 'Failed to load analytics. Check that the server is running.'
   } finally {
@@ -204,5 +298,6 @@ async function load() {
   }
 }
 
+watch(filterRange, load)
 onMounted(load)
 </script>

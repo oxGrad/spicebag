@@ -10,7 +10,7 @@ import (
 
 func TestApplicationsPerMonthEmpty(t *testing.T) {
 	store := openTestStore(t)
-	months, err := store.ApplicationsPerMonth()
+	months, err := store.ApplicationsPerMonth("", "")
 	require.NoError(t, err)
 	assert.Empty(t, months)
 }
@@ -27,7 +27,7 @@ func TestApplicationsPerMonth(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	months, err := store.ApplicationsPerMonth()
+	months, err := store.ApplicationsPerMonth("", "")
 	require.NoError(t, err)
 	require.Len(t, months, 2)
 	// Chronological order
@@ -39,7 +39,7 @@ func TestApplicationsPerMonth(t *testing.T) {
 
 func TestSourceStatsEmpty(t *testing.T) {
 	store := openTestStore(t)
-	stats, err := store.SourceStats()
+	stats, err := store.SourceStats("", "")
 	require.NoError(t, err)
 	assert.Empty(t, stats)
 }
@@ -66,7 +66,7 @@ func TestSourceStats(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, store.AddStatusHistory(id3, "offer", ""))
 
-	stats, err := store.SourceStats()
+	stats, err := store.SourceStats("", "")
 	require.NoError(t, err)
 	require.Len(t, stats, 2)
 
