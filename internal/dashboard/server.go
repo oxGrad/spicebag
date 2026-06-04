@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/oxGrad/spicebag/internal/config"
 	"github.com/oxGrad/spicebag/internal/db"
@@ -23,11 +24,21 @@ type Server struct {
 	mem   *memoryPkg.DB
 	cfg   config.Config
 	mux   *http.ServeMux
+
+	sessmu   sync.Mutex
+	sessions map[string]*claudeSession
 }
 
 // NewServer creates a Server and registers all routes.
 func NewServer(root string, store *db.Store, mem *memoryPkg.DB, cfg config.Config) *Server {
-	s := &Server{root: root, store: store, mem: mem, cfg: cfg, mux: http.NewServeMux()}
+	s := &Server{
+		root:     root,
+		store:    store,
+		mem:      mem,
+		cfg:      cfg,
+		mux:      http.NewServeMux(),
+		sessions: make(map[string]*claudeSession),
+	}
 	s.routes()
 	return s
 }
@@ -89,6 +100,8 @@ func (s *Server) routes() {
 
 	s.mux.HandleFunc("GET /api/memories", s.handleAPIMemoriesList)
 	s.mux.HandleFunc("GET /api/memories/{name}", s.handleAPIMemoriesGet)
+
+	s.mux.HandleFunc("/ws/claude", s.handleWSClaude)
 
 	s.mux.HandleFunc("/", s.handleSPA)
 }

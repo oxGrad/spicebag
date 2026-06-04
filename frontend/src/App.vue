@@ -30,9 +30,42 @@
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
       >Settings</RouterLink>
+
+      <div class="mt-auto pt-3 border-t border-white/10">
+        <button
+          @click="showClaude = !showClaude"
+          class="w-full text-left px-2.5 py-2 rounded-md text-sm transition-colors flex items-center gap-2"
+          :class="showClaude
+            ? 'bg-white/10 text-white font-medium'
+            : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'"
+          title="Toggle Claude Code (Ctrl+`)"
+        >
+          <span class="font-mono text-xs opacity-70">$_</span>
+          Claude Code
+        </button>
+      </div>
     </nav>
     <main class="ml-52 flex-1 p-8 min-w-0">
       <RouterView />
     </main>
   </div>
+
+  <ClaudePanel :open="showClaude" @close="showClaude = false" />
 </template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import ClaudePanel from './components/ClaudePanel.vue'
+
+const showClaude = ref(false)
+
+function onKeyDown(e) {
+  if (e.ctrlKey && e.key === '`') {
+    e.preventDefault()
+    showClaude.value = !showClaude.value
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', onKeyDown))
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeyDown))
+</script>
