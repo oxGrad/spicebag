@@ -16,6 +16,7 @@ import (
 	"github.com/oxGrad/spicebag/internal/dashboard"
 	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/oxGrad/spicebag/internal/fs"
+	"github.com/oxGrad/spicebag/internal/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,11 +27,14 @@ func newTestServer(t *testing.T) *dashboard.Server {
 	store, err := db.Open(filepath.Join(root, "test.db"))
 	require.NoError(t, err)
 	t.Cleanup(func() { store.Close() })
+	mem, err := memory.Open(filepath.Join(root, "memory.db"))
+	require.NoError(t, err)
+	t.Cleanup(func() { mem.Close() })
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
 		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	cfg := config.Config{GotenbergURL: "http://localhost:3000", DashboardPort: 8080}
-	return dashboard.NewServer(root, store, cfg)
+	return dashboard.NewServer(root, store, mem, cfg)
 }
 
 func TestRootReturns200(t *testing.T) {
@@ -199,11 +203,13 @@ func TestExportRoute(t *testing.T) {
 	root := t.TempDir()
 	store, _ := db.Open(filepath.Join(root, "test.db"))
 	defer store.Close()
+	mem, _ := memory.Open(filepath.Join(root, "memory.db"))
+	defer mem.Close()
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
 		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	cfg := config.Config{GotenbergURL: gotenberg.URL}
-	srv := dashboard.NewServer(root, store, cfg)
+	srv := dashboard.NewServer(root, store, mem, cfg)
 
 	require.NoError(t, fs.WriteCV(root, "cv-test.html", "<h1>Hello</h1>"))
 
@@ -228,10 +234,13 @@ func TestGotenbergStatusRunning(t *testing.T) {
 	store, err := db.Open(filepath.Join(root, "test.db"))
 	require.NoError(t, err)
 	defer store.Close()
+	mem, err := memory.Open(filepath.Join(root, "memory.db"))
+	require.NoError(t, err)
+	defer mem.Close()
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
 		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
-	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: mock.URL})
+	srv := dashboard.NewServer(root, store, mem, config.Config{GotenbergURL: mock.URL})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
@@ -246,11 +255,14 @@ func TestGotenbergStatusStopped(t *testing.T) {
 	store, err := db.Open(filepath.Join(root, "test.db"))
 	require.NoError(t, err)
 	defer store.Close()
+	mem, err := memory.Open(filepath.Join(root, "memory.db"))
+	require.NoError(t, err)
+	defer mem.Close()
 	for _, d := range []string{"cv", "cover-letters", "themes", "applications"} {
 		os.MkdirAll(filepath.Join(root, d), 0o755)
 	}
 	// point at a port with nothing listening
-	srv := dashboard.NewServer(root, store, config.Config{GotenbergURL: "http://localhost:19999"})
+	srv := dashboard.NewServer(root, store, mem, config.Config{GotenbergURL: "http://localhost:19999"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/gotenberg/status", nil)
 	w := httptest.NewRecorder()
@@ -391,4 +403,21 @@ func TestAPIAppStatusUpdate(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	assert.Contains(t, w.Body.String(), "interview")
+}
+
+func TestMemoriesListRoute(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/memories", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "[")
+}
+
+func TestMemoryGetByNameNotFound(t *testing.T) {
+	srv := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/memories/does-not-exist", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
