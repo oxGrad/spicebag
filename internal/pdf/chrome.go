@@ -12,7 +12,7 @@ import (
 func renderWithChrome(html, css string) ([]byte, error) {
 	path, found := launcher.LookPath()
 	if !found {
-		return nil, fmt.Errorf("Chrome or Chromium not found — install Chrome, or point gotenberg_url at a running Gotenberg instance")
+		return nil, fmt.Errorf("chrome or chromium not found — install Chrome, or point gotenberg_url at a running Gotenberg instance")
 	}
 
 	u, err := launcher.New().

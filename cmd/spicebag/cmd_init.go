@@ -114,13 +114,13 @@ func ensureMemoryHook(settingsPath string) error {
 	}
 
 	// Navigate / create hooks.UserPromptSubmit
-	hooksRaw, _ := settings["hooks"]
+	hooksRaw := settings["hooks"]
 	hooksMap, ok := hooksRaw.(map[string]any)
 	if !ok {
 		hooksMap = map[string]any{}
 	}
 
-	upsRaw, _ := hooksMap["UserPromptSubmit"]
+	upsRaw := hooksMap["UserPromptSubmit"]
 	ups, ok := upsRaw.([]any)
 	if !ok {
 		ups = []any{}
@@ -132,7 +132,7 @@ func ensureMemoryHook(settingsPath string) error {
 		if !ok {
 			continue
 		}
-		hooksListRaw, _ := entry["hooks"]
+		hooksListRaw := entry["hooks"]
 		hooksList, ok := hooksListRaw.([]any)
 		if !ok {
 			continue
