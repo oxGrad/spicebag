@@ -20,21 +20,27 @@
         >{{ p.label }}</button>
       </div>
 
-      <!-- Custom range inputs (shown only when custom preset active) -->
+      <!-- Custom range selects (shown only when custom preset active) -->
       <div v-if="preset === 'custom'" class="flex items-center gap-2">
-        <input
+        <select
           v-model="customFrom"
-          type="month"
-          class="border rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          :max="customTo || undefined"
+          class="border rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
         >
+          <option value="">From</option>
+          <option v-for="m in monthOptions" :key="m.value" :value="m.value" :disabled="customTo && m.value > customTo">
+            {{ m.label }}
+          </option>
+        </select>
         <span class="text-gray-400 text-sm">—</span>
-        <input
+        <select
           v-model="customTo"
-          type="month"
-          class="border rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          :min="customFrom || undefined"
+          class="border rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
         >
+          <option value="">To</option>
+          <option v-for="m in monthOptions" :key="m.value" :value="m.value" :disabled="customFrom && m.value < customFrom">
+            {{ m.label }}
+          </option>
+        </select>
       </div>
     </div>
   </div>
@@ -192,6 +198,19 @@ function ymOffset(monthsAgo) {
   d.setMonth(d.getMonth() - monthsAgo)
   return d.toISOString().slice(0, 7)
 }
+
+// Options for custom range selects: 24 months back through current month, newest first.
+const monthOptions = (() => {
+  const opts = []
+  const now = new Date()
+  for (let i = 0; i <= 23; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const value = d.toISOString().slice(0, 7)
+    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    opts.push({ value, label })
+  }
+  return opts
+})()
 
 const filterRange = computed(() => {
   switch (preset.value) {
