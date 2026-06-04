@@ -182,6 +182,14 @@ func (s *Store) GetApplicationByID(id int64) (Application, error) {
 	return a, err
 }
 
+// parseFlexDate accepts YYYY-MM-DD or YYYY-MM.
+func parseFlexDate(s string) (time.Time, error) {
+	if t, err := time.Parse("2006-01-02", s); err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01", s)
+}
+
 func (s *Store) GetExperienceStats() (ExperienceStats, error) {
 	entries, err := s.ListExperience()
 	if err != nil {
@@ -192,13 +200,13 @@ func (s *Store) GetExperienceStats() (ExperienceStats, error) {
 	stats := ExperienceStats{ByRole: make(map[string]float64)}
 
 	for _, e := range entries {
-		start, err := time.Parse("2006-01-02", e.StartDate)
+		start, err := parseFlexDate(e.StartDate)
 		if err != nil {
 			continue
 		}
 		end := now
 		if e.EndDate != "" {
-			end, err = time.Parse("2006-01-02", e.EndDate)
+			end, err = parseFlexDate(e.EndDate)
 			if err != nil {
 				continue
 			}
