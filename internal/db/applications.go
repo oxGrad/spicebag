@@ -51,7 +51,7 @@ func (s *Store) UpsertApplication(app Application) (int64, error) {
 }
 
 func (s *Store) ListApplications() ([]Application, error) {
-	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications ORDER BY applied_date DESC`)
+	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications ORDER BY id DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +66,11 @@ func (s *Store) ListApplications() ([]Application, error) {
 		apps = append(apps, a)
 	}
 	return apps, rows.Err()
+}
+
+func (s *Store) UpdateAppliedDate(id int64, date string) error {
+	_, err := s.db.Exec(`UPDATE applications SET applied_date = ? WHERE id = ?`, date, id)
+	return err
 }
 
 func (s *Store) UpdateApplicationSource(id int64, source string) error {
@@ -115,7 +120,7 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 		         'unknown'
 		       ) AS current_status
 		FROM applications a
-		ORDER BY a.applied_date DESC
+		ORDER BY a.id DESC
 	`)
 	if err != nil {
 		return nil, err
@@ -148,7 +153,7 @@ func (s *Store) ListApplicationsByBaseCV(baseCVName string) ([]ApplicationWithSt
 		       ) AS current_status
 		FROM applications a
 		WHERE a.base_cv_used = ?
-		ORDER BY a.applied_date DESC
+		ORDER BY a.id DESC
 	`, baseCVName)
 	if err != nil {
 		return nil, err

@@ -35,7 +35,7 @@
         >
           <td class="px-4 py-3 font-medium">{{ app.Company }}</td>
           <td class="px-4 py-3 text-gray-600">{{ app.Role }}</td>
-          <td class="px-4 py-3 text-gray-500">{{ app.AppliedDate }}</td>
+          <td class="px-4 py-3" :class="app.AppliedDate ? 'text-gray-500' : 'text-gray-300'">{{ app.AppliedDate || '—' }}</td>
           <td class="px-4 py-3 text-gray-500 text-xs">{{ app.Source || '—' }}</td>
           <td class="px-4 py-3">
             <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="badgeClass(app.CurrentStatus)">

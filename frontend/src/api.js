@@ -46,6 +46,8 @@ export const api = {
       post(`/apps/${id}/status`, { status, notes: notes ?? "" }),
     updateSource: (id, source) =>
       post(`/apps/${id}/source`, { source }),
+    updateAppliedDate: (id, date) =>
+      post(`/apps/${id}/applied-date`, { date }),
     pdfs: (id) => get(`/apps/${id}/pdfs`),
     questions: (id) => get(`/apps/${id}/questions`),
     addQuestion: (id, question, position) =>

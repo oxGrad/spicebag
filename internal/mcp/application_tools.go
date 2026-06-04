@@ -57,7 +57,7 @@ func (s *Server) registerApplicationTools() {
 			_, err = s.store.UpsertApplication(db.Application{
 				Company:     company,
 				Role:        role,
-				AppliedDate: date,
+				AppliedDate: "", // set manually by user when they actually submit
 				BaseCVUsed:  baseCVUsed,
 				Notes:       notes,
 				FolderPath:  folderPath,

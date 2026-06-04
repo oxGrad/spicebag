@@ -10,7 +10,29 @@
   <div v-if="detail" class="mb-5">
     <h1 class="text-2xl font-bold">{{ detail.app.Company }}</h1>
     <div class="flex items-center gap-3 mt-1">
-      <p class="text-gray-500 text-sm">{{ detail.app.Role }} · Applied {{ detail.app.AppliedDate }}</p>
+      <p class="text-gray-500 text-sm">{{ detail.app.Role }}</p>
+      <span class="text-gray-300 text-sm">·</span>
+      <div class="flex items-center gap-1.5">
+        <template v-if="editingDate">
+          <input
+            v-model="dateInput"
+            type="text"
+            placeholder="YYYY-MM-DD"
+            maxlength="10"
+            class="border rounded px-2 py-0.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-gray-400"
+            @keydown.enter="saveAppliedDate"
+            @keydown.escape="editingDate = false"
+          >
+          <button @click="saveAppliedDate" class="text-xs text-blue-600 hover:underline">Save</button>
+          <button @click="editingDate = false" class="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+        </template>
+        <template v-else>
+          <span class="text-sm" :class="detail.app.AppliedDate ? 'text-gray-500' : 'text-gray-300'">
+            {{ detail.app.AppliedDate ? 'Applied ' + detail.app.AppliedDate : 'Applied date not set' }}
+          </span>
+          <button @click="startEditDate" class="text-xs text-gray-400 hover:text-gray-600">✎</button>
+        </template>
+      </div>
       <button
         @click="copyAppId"
         class="flex items-center gap-1 text-xs border rounded px-2 py-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
@@ -350,6 +372,8 @@ const copiedId = ref(null)
 const idCopied = ref(false)
 const bulletEdits = ref({}) // questionId -> string[]
 const answerCmdCopied = ref(false)
+const editingDate = ref(false)
+const dateInput = ref('')
 
 const appId = computed(() => route.params.id)
 
@@ -616,6 +640,17 @@ function copyAnswer(q) {
   navigator.clipboard.writeText(q.answer)
   copiedId.value = q.id
   setTimeout(() => { copiedId.value = null }, 2000)
+}
+
+function startEditDate() {
+  dateInput.value = detail.value.app.AppliedDate ?? ''
+  editingDate.value = true
+}
+
+async function saveAppliedDate() {
+  await api.apps.updateAppliedDate(appId.value, dateInput.value.trim())
+  detail.value.app.AppliedDate = dateInput.value.trim()
+  editingDate.value = false
 }
 
 async function saveSource() {

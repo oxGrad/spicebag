@@ -101,6 +101,20 @@ func (s *Server) handleAPIAppStatusUpdate(w http.ResponseWriter, r *http.Request
 	writeJSON(w, history)
 }
 
+func (s *Server) handleAPIAppAppliedDate(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	date := r.FormValue("date") // YYYY-MM-DD or empty to clear
+	if err := s.store.UpdateAppliedDate(id, date); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) handleAPIAppsDelete(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r, "id")
 	if !ok {
