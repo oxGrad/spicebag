@@ -23,13 +23,6 @@ func newInitCmd() *cobra.Command {
 			if err := runInit(spicebagRoot(), os.Stdout); err != nil {
 				return err
 			}
-			cwd, _ := os.Getwd()
-			settingsPath := filepath.Join(cwd, ".claude", "settings.local.json")
-			if err := ensureMemoryHook(settingsPath); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: could not install memory hook in %s: %v\n", settingsPath, err)
-			} else {
-				fmt.Println("Ensured memory search hook in", settingsPath)
-			}
 			fmt.Println("\nRun `spicebag start` to open the dashboard.")
 			return nil
 		},
@@ -87,6 +80,15 @@ func runInit(root string, w io.Writer) error {
 				fmt.Fprintln(w, "Copied docker-compose.yml to", composeDest)
 			}
 		}
+	}
+
+	home, _ := os.UserHomeDir()
+	settingsPath := filepath.Join(home, ".claude", "settings.json")
+	if err := ensureMemoryHook(settingsPath); err != nil {
+		fmt.Fprintf(w, "Warning: could not install memory hook in %s: %v\n", settingsPath, err)
+	} else {
+		fmt.Fprintln(w, "Installed memory search hook in", settingsPath,
+			"(fires on every prompt — silent when no memories match)")
 	}
 
 	return nil
