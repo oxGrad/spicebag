@@ -100,10 +100,18 @@
         class="flex items-center justify-between px-4 py-3"
       >
         <span class="text-sm">{{ src.name }}</span>
-        <button
-          @click="removeSource(src.id)"
-          class="text-xs text-red-400 hover:text-red-600"
-        >Remove</button>
+        <div class="flex items-center gap-2">
+          <template v-if="confirmDeleteId === src.id">
+            <span class="text-xs text-gray-500">Remove "{{ src.name }}"?</span>
+            <button @click="removeSource(src.id)" class="text-xs text-red-500 hover:text-red-700 font-medium">Yes</button>
+            <button @click="confirmDeleteId = null" class="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+          </template>
+          <button
+            v-else
+            @click="confirmDeleteId = src.id"
+            class="text-xs text-red-400 hover:text-red-600"
+          >Remove</button>
+        </div>
       </div>
     </div>
 
@@ -149,8 +157,9 @@ const defaultCV    = ref(localStorage.getItem(CV_DEFAULT_KEY) ?? '')
 const defaultCL    = ref(localStorage.getItem(CL_DEFAULT_KEY) ?? '')
 
 // Sources state
-const sources     = ref([])
-const newSourceName = ref('')
+const sources        = ref([])
+const newSourceName  = ref('')
+const confirmDeleteId = ref(null)
 
 onMounted(async () => {
   themes.value  = await api.themes.list()
@@ -201,5 +210,6 @@ async function addSource() {
 async function removeSource(id) {
   await api.sources.delete(id)
   sources.value = sources.value.filter(s => s.id !== id)
+  confirmDeleteId.value = null
 }
 </script>
