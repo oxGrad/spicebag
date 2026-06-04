@@ -71,6 +71,7 @@ func (s *Server) CallTool(ctx context.Context, name string, args map[string]any)
 	if err != nil {
 		return "", fmt.Errorf("creating in-process client: %w", err)
 	}
+	defer c.Close()
 	initReq := mcplib.InitializeRequest{}
 	initReq.Params.ProtocolVersion = mcplib.LATEST_PROTOCOL_VERSION
 	initReq.Params.ClientInfo = mcplib.Implementation{Name: "spicebag-test", Version: "1.0.0"}
