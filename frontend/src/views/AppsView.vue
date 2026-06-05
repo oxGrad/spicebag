@@ -58,12 +58,16 @@ const router = useRouter()
 const allApps = ref([])
 
 const activeFilter = computed(() => {
-  if (route.query.month) return `Month: ${route.query.month}`
+  if (route.query.date)   return `Date: ${route.query.date}`
+  if (route.query.month)  return `Month: ${route.query.month}`
   if (route.query.source) return `Source: ${route.query.source}`
   return null
 })
 
 const filtered = computed(() => {
+  if (route.query.date) {
+    return allApps.value.filter(a => a.AppliedDate === route.query.date)
+  }
   if (route.query.month) {
     return allApps.value.filter(a => a.AppliedDate?.startsWith(route.query.month))
   }
@@ -84,6 +88,7 @@ onMounted(async () => {
 
 function badgeClass(status) {
   const map = {
+    pending: 'bg-gray-100 text-gray-600',
     offer: 'bg-green-100 text-green-800',
     interview: 'bg-yellow-100 text-yellow-800',
     assessment: 'bg-yellow-100 text-yellow-800',

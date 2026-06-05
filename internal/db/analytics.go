@@ -5,6 +5,51 @@ type MonthCount struct {
 	Count int    `json:"count"`
 }
 
+type DayCount struct {
+	Day   string `json:"day"`   // YYYY-MM-DD
+	Count int    `json:"count"`
+}
+
+// ApplicationsPerDay returns application counts grouped by day.
+// from and to are optional YYYY-MM strings; empty = no constraint.
+func (s *Store) ApplicationsPerDay(from, to string) ([]DayCount, error) {
+	q := `
+		SELECT strftime('%Y-%m-%d', applied_date) AS day, COUNT(*) AS count
+		FROM applications
+		WHERE applied_date != ''
+		AND id NOT IN (
+			SELECT DISTINCT application_id FROM application_status_history
+			WHERE status = 'skipped'
+		)
+	`
+	var args []any
+	if from != "" {
+		q += ` AND strftime('%Y-%m', applied_date) >= ?`
+		args = append(args, from)
+	}
+	if to != "" {
+		q += ` AND strftime('%Y-%m', applied_date) <= ?`
+		args = append(args, to)
+	}
+	q += ` GROUP BY day ORDER BY day ASC`
+
+	rows, err := s.db.Query(q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []DayCount
+	for rows.Next() {
+		var d DayCount
+		if err := rows.Scan(&d.Day, &d.Count); err != nil {
+			return nil, err
+		}
+		result = append(result, d)
+	}
+	return result, rows.Err()
+}
+
 type SourceStat struct {
 	Source      string  `json:"source"`
 	Total       int     `json:"total"`

@@ -11,7 +11,7 @@ import (
 )
 
 // skipped = generated docs but decided not to apply; excluded from analytics.
-var validStatuses = []string{"applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted", "skipped"}
+var validStatuses = []string{"pending", "applied", "assessment", "interview", "offer", "rejected", "withdrawn", "ghosted", "skipped"}
 
 func isValidStatus(s string) bool { return slices.Contains(validStatuses, s) }
 

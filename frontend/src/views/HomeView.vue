@@ -94,25 +94,41 @@
       </div>
     </div>
 
-    <!-- Applications per month -->
+    <!-- Applications per day / month -->
     <div class="bg-white rounded-lg shadow p-5">
-      <h2 class="font-semibold mb-4">Applications by month</h2>
-      <div v-if="data.per_month.length === 0" class="text-gray-400 text-sm">No data for this period.</div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">{{ groupBy === 'day' ? 'Applications by day' : 'Applications by month' }}</h2>
+        <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+          <button
+            @click="groupBy = 'day'"
+            class="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
+            :class="groupBy === 'day' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'"
+          >Daily</button>
+          <button
+            @click="groupBy = 'month'"
+            class="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
+            :class="groupBy === 'month' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'"
+          >Monthly</button>
+        </div>
+      </div>
+      <div v-if="data.per_period.length === 0" class="text-gray-400 text-sm">No data for this period.</div>
       <div v-else class="space-y-2">
         <RouterLink
-          v-for="m in data.per_month"
-          :key="m.month"
-          :to="`/apps?month=${m.month}`"
+          v-for="item in data.per_period"
+          :key="item.day ?? item.month"
+          :to="groupBy === 'day' ? `/apps?date=${item.day}` : `/apps?month=${item.month}`"
           class="flex items-center gap-3 group"
         >
-          <span class="text-xs text-gray-500 w-16 shrink-0 group-hover:text-blue-500 transition-colors">{{ m.month }}</span>
+          <span class="text-xs text-gray-500 w-24 shrink-0 group-hover:text-blue-500 transition-colors">
+            {{ groupBy === 'day' ? item.day : item.month }}
+          </span>
           <div class="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
             <div
               class="bg-blue-400 h-full rounded-full transition-all group-hover:bg-blue-500"
-              :style="{ width: barWidth(m.count) }"
+              :style="{ width: barWidth(item.count) }"
             ></div>
           </div>
-          <span class="text-sm font-medium w-6 text-right text-gray-600 group-hover:text-blue-600">{{ m.count }}</span>
+          <span class="text-sm font-medium w-6 text-right text-gray-600 group-hover:text-blue-600">{{ item.count }}</span>
         </RouterLink>
       </div>
     </div>
@@ -175,6 +191,9 @@ import { api } from '../api.js'
 const data    = ref(null)
 const loading = ref(true)
 const error   = ref(null)
+
+// --- Group-by state ---
+const groupBy = ref('day')
 
 // --- Filter state ---
 const presets = [
@@ -253,7 +272,13 @@ const rangeLabel = computed(() => {
 const thisMonth = computed(() => {
   if (!data.value) return 0
   const ym = ymNow()
-  return data.value.per_month.find(m => m.month === ym)?.count ?? 0
+  if (data.value.period_type === 'month') {
+    return data.value.per_period.find(m => m.month === ym)?.count ?? 0
+  }
+  // daily view: sum counts for current month
+  return data.value.per_period
+    .filter(d => d.day?.startsWith(ym))
+    .reduce((s, d) => s + d.count, 0)
 })
 
 const funnel = computed(() => {
@@ -268,7 +293,7 @@ const funnel = computed(() => {
 })
 
 const maxCount = computed(() =>
-  data.value ? Math.max(...data.value.per_month.map(m => m.count), 1) : 1
+  data.value ? Math.max(...data.value.per_period.map(m => m.count), 1) : 1
 )
 
 function barWidth(count) {
@@ -309,7 +334,7 @@ async function load() {
   error.value = null
   try {
     const { from, to } = filterRange.value
-    data.value = await api.analytics.get(from, to)
+    data.value = await api.analytics.get(from, to, groupBy.value)
   } catch {
     error.value = 'Failed to load analytics. Check that the server is running.'
   } finally {
@@ -318,5 +343,6 @@ async function load() {
 }
 
 watch(filterRange, load)
+watch(groupBy, load)
 onMounted(load)
 </script>

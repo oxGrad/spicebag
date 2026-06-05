@@ -54,7 +54,7 @@ func (s *Server) registerApplicationTools() {
 				return mcplib.NewToolResultError(fmt.Sprintf("creating application: %v", err)), nil
 			}
 
-			_, err = s.store.UpsertApplication(db.Application{
+			id, err := s.store.UpsertApplication(db.Application{
 				Company:     company,
 				Role:        role,
 				AppliedDate: "", // set manually by user when they actually submit
@@ -66,6 +66,10 @@ func (s *Server) registerApplicationTools() {
 			})
 			if err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("saving application to DB: %v", err)), nil
+			}
+
+			if err := s.store.AddStatusHistory(id, "pending", ""); err != nil {
+				return mcplib.NewToolResultError(fmt.Sprintf("setting initial status: %v", err)), nil
 			}
 
 			return mcplib.NewToolResultText(fmt.Sprintf("Created application at %s", folderPath)), nil

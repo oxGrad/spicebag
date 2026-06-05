@@ -230,7 +230,7 @@ func TestAnalyticsEmpty(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "per_month")
+	assert.Contains(t, w.Body.String(), "per_period")
 	assert.Contains(t, w.Body.String(), "source_stats")
 }
 
