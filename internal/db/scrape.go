@@ -1,5 +1,11 @@
 package db
 
+import (
+	"database/sql"
+	"net/url"
+	"strings"
+)
+
 type ScrapeCompany struct {
 	ID               int64  `json:"id"`
 	Name             string `json:"name"`
@@ -124,4 +130,114 @@ func (s *Store) UpdateScrapePrefs(p ScrapePrefs) error {
 		p.HomeTimezone, p.LocationNotes,
 	)
 	return err
+}
+
+type ScrapedJob struct {
+	ID                   int64         `json:"id"`
+	CompanyID            int64         `json:"company_id"`
+	CompanyName          string        `json:"company_name"`
+	Title                string        `json:"title"`
+	Location             string        `json:"location"`
+	URL                  string        `json:"url"`
+	MatchReason          string        `json:"match_reason"`
+	Status               string        `json:"status"`
+	ScrapedAt            string        `json:"scraped_at"`
+	AppliedApplicationID sql.NullInt64 `json:"applied_application_id"`
+}
+
+// SaveScrapedJobs inserts jobs, ignoring any whose URL already exists.
+// Returns the count of newly inserted rows.
+func (s *Store) SaveScrapedJobs(jobs []ScrapedJob) (int, error) {
+	added := 0
+	for _, j := range jobs {
+		res, err := s.db.Exec(
+			`INSERT OR IGNORE INTO scraped_jobs
+			   (company_id, company_name, title, location, url, match_reason)
+			 VALUES (?, ?, ?, ?, ?, ?)`,
+			j.CompanyID, j.CompanyName, j.Title, j.Location, j.URL, j.MatchReason,
+		)
+		if err != nil {
+			return added, err
+		}
+		if n, _ := res.RowsAffected(); n > 0 {
+			added++
+		}
+	}
+	return added, nil
+}
+
+func (s *Store) ListScrapedJobs(status string) ([]ScrapedJob, error) {
+	rows, err := s.db.Query(
+		`SELECT id, company_id, company_name, title, location, url, match_reason,
+		        status, scraped_at, applied_application_id
+		 FROM scraped_jobs WHERE status=? ORDER BY id DESC`, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []ScrapedJob
+	for rows.Next() {
+		var j ScrapedJob
+		if err := rows.Scan(&j.ID, &j.CompanyID, &j.CompanyName, &j.Title, &j.Location,
+			&j.URL, &j.MatchReason, &j.Status, &j.ScrapedAt, &j.AppliedApplicationID); err != nil {
+			return nil, err
+		}
+		out = append(out, j)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) SetScrapedJobStatus(id int64, status string) error {
+	_, err := s.db.Exec(`UPDATE scraped_jobs SET status=? WHERE id=?`, status, id)
+	return err
+}
+
+// LinkApplicationToScrapedJob finds a scraped job whose normalized URL matches
+// the application's normalized job URL, links them, and marks it applied.
+// Returns true if a match was found and linked.
+func (s *Store) LinkApplicationToScrapedJob(appID int64, jobURL string) (bool, error) {
+	norm := NormalizeJobURL(jobURL)
+	if norm == "" {
+		return false, nil
+	}
+	rows, err := s.db.Query(`SELECT id, url FROM scraped_jobs WHERE status != 'applied'`)
+	if err != nil {
+		return false, err
+	}
+	var matchID int64
+	for rows.Next() {
+		var id int64
+		var u string
+		if err := rows.Scan(&id, &u); err != nil {
+			rows.Close()
+			return false, err
+		}
+		if NormalizeJobURL(u) == norm {
+			matchID = id
+			break
+		}
+	}
+	rows.Close()
+	if matchID == 0 {
+		return false, nil
+	}
+	_, err = s.db.Exec(
+		`UPDATE scraped_jobs SET applied_application_id=?, status='applied' WHERE id=?`,
+		appID, matchID,
+	)
+	return err == nil, err
+}
+
+// NormalizeJobURL strips query/fragment, trailing slash, and lowercases the host.
+func NormalizeJobURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return ""
+	}
+	u.RawQuery = ""
+	u.Fragment = ""
+	u.Host = strings.ToLower(u.Host)
+	p := strings.TrimRight(u.Path, "/")
+	return u.Scheme + "://" + u.Host + p
 }

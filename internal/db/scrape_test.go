@@ -70,6 +70,78 @@ func TestScrapePrefs(t *testing.T) {
 	assert.Contains(t, prefs.LocationNotes, "APAC")
 }
 
+func TestScrapedJobsSaveAndList(t *testing.T) {
+	store := openTestStore(t)
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{
+		Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme",
+		CareersURL: "https://boards.greenhouse.io/acme",
+	})
+
+	jobs := []db.ScrapedJob{
+		{CompanyID: c.ID, CompanyName: "Acme", Title: "SRE", Location: "Remote", URL: "https://j/1", MatchReason: "worldwide"},
+		{CompanyID: c.ID, CompanyName: "Acme", Title: "DevOps", Location: "Remote APAC", URL: "https://j/2", MatchReason: "APAC"},
+	}
+	added, err := store.SaveScrapedJobs(jobs)
+	require.NoError(t, err)
+	assert.Equal(t, 2, added)
+
+	added, err = store.SaveScrapedJobs(jobs)
+	require.NoError(t, err)
+	assert.Equal(t, 0, added)
+
+	list, err := store.ListScrapedJobs("new")
+	require.NoError(t, err)
+	assert.Len(t, list, 2)
+}
+
+func TestScrapedJobStatusUpdate(t *testing.T) {
+	store := openTestStore(t)
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u"})
+	store.SaveScrapedJobs([]db.ScrapedJob{{CompanyID: c.ID, CompanyName: "Acme", Title: "SRE", URL: "https://j/1"}})
+
+	list, _ := store.ListScrapedJobs("new")
+	require.Len(t, list, 1)
+	require.NoError(t, store.SetScrapedJobStatus(list[0].ID, "dismissed"))
+
+	assert.Len(t, mustList(t, store, "new"), 0)
+	assert.Len(t, mustList(t, store, "dismissed"), 1)
+}
+
+func TestApplyLinkageByURL(t *testing.T) {
+	store := openTestStore(t)
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u"})
+	store.SaveScrapedJobs([]db.ScrapedJob{
+		{CompanyID: c.ID, CompanyName: "Acme", Title: "SRE", URL: "https://boards.greenhouse.io/acme/jobs/42"},
+	})
+
+	appID, err := store.UpsertApplication(db.Application{
+		Company: "Acme", Role: "SRE", FolderPath: "/tmp/acme",
+		JobURL: "https://boards.greenhouse.io/acme/jobs/42?utm_source=x",
+	})
+	require.NoError(t, err)
+
+	linked, err := store.LinkApplicationToScrapedJob(appID, "https://boards.greenhouse.io/acme/jobs/42?utm_source=x")
+	require.NoError(t, err)
+	assert.True(t, linked)
+
+	assert.Len(t, mustList(t, store, "new"), 0)
+	applied := mustList(t, store, "applied")
+	require.Len(t, applied, 1)
+	assert.Equal(t, appID, applied[0].AppliedApplicationID.Int64)
+
+	apps, err := store.ListApplicationsWithStatus()
+	require.NoError(t, err)
+	require.Len(t, apps, 1)
+	assert.True(t, apps[0].FromScrape)
+}
+
+func mustList(t *testing.T, store *db.Store, status string) []db.ScrapedJob {
+	t.Helper()
+	l, err := store.ListScrapedJobs(status)
+	require.NoError(t, err)
+	return l
+}
+
 func TestDeleteScrapeCompanyCascadesJobs(t *testing.T) {
 	store := openTestStore(t)
 	c, err := store.AddScrapeCompany(db.ScrapeCompany{
