@@ -10,6 +10,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFetchATSJobsRecordsStatus(t *testing.T) {
+	if testing.Short() {
+		t.Skip("network test")
+	}
+	_, srv := setup(t)
+	store := srv.Store()
+
+	c, err := store.AddScrapeCompany(db.ScrapeCompany{
+		Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "does-not-exist-xyz", CareersURL: "u",
+	})
+	require.NoError(t, err)
+
+	out, err := srv.CallTool(context.Background(), "fetch_ats_jobs", map[string]any{})
+	require.NoError(t, err)
+
+	var got struct {
+		Jobs   []map[string]any `json:"jobs"`
+		Errors []map[string]any `json:"errors"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &got))
+	list, _ := store.ListScrapeCompanies()
+	require.Len(t, list, 1)
+	assert.NotEqual(t, "never", list[0].LastScrapeStatus)
+	_ = c
+}
+
 func TestGetScrapePreferences(t *testing.T) {
 	_, srv := setup(t) // helper in internal/mcp/mcp_test.go: returns (root, *Server)
 	store := srv.Store()
