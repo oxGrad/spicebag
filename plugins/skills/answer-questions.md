@@ -41,7 +41,24 @@ For each question in the list, check `user_bullets`:
 - Fall back to the standard approach: assess whether the CV and memory provide enough material
 - If a strong answer requires specific claims not in CV/memory, formulate one targeted clarifying question
 
-Collect all clarifying questions (from both routes) into a single numbered list. Ask them all at once. Wait for answers before writing.
+**Use `AskUserQuestion` — do not write clarifying questions as plain text.**
+
+If there are clarifying questions (from either route), call `AskUserQuestion` one question at a time, waiting for the answer before asking the next. For each question:
+
+1. Set `multiSelect: true`
+2. Generate exactly 3 pre-populated options using this priority order:
+   - **First**: any verified fact already saved in memory for that company (e.g. `memory/user_exp_{slug}.md`)
+   - **Second**: plausible inferences from the CV wording or the user's own bullets
+   - **Third**: a reasonable generic answer typical for that role level/domain
+3. Set option 4 to: label `"Other / Combine"`, description `"I'll type a custom answer or combine the above"` — always last
+
+After all questions are answered, summarise the confirmed answers as a numbered list and use `AskUserQuestion` to ask:
+- Question: "Do these answers look correct? You can revise before I write the application answers."
+- `multiSelect: false`
+- Option 1: `"Looks good, proceed"` — description: "Use these answers as-is"
+- Option 2: `"I want to revise"` — description: "I'll tell you which answer to change"
+
+If the user chooses "I want to revise", let them say which answer to update (free text via the notes field or a follow-up message), update your record, re-summarise, and confirm again before proceeding.
 
 If no clarifying questions are needed, state that briefly and proceed directly to step 4.
 

@@ -40,20 +40,38 @@ Present this assessment and wait for the user to confirm before writing anything
 
 ### 4. Ask clarifying questions
 
-Before writing, identify the 2–3 experiences in the CV most relevant to this specific role. For each, ask one targeted question that would make the output more specific and accurate.
+Before writing, identify the 2–3 experiences in the CV most relevant to this specific role. For each, formulate one targeted question that would make the output more specific and accurate.
 
-Good questions:
-- Scale: *"At [Company] you mention scaling [system]: what was the peak load or user count? This will strengthen the bullet."*
-- Impact: *"What was the measurable outcome of [initiative]? (e.g. % reduction, revenue impact, time saved)"*
-- Depth: *"For [technology], were you the lead, a contributor, or a reviewer? The cover letter will reference this."*
-- Scope: *"How many engineers were in the team you led at [Company]?"*
+Good question types:
+- Scale: "At [Company] you mention scaling [system] — what was the peak load or user count?"
+- Impact: "What was the measurable outcome of [initiative]? (e.g. % reduction, revenue impact, time saved)"
+- Depth: "For [technology], were you the lead, a contributor, or a reviewer?"
+- Scope: "How many engineers were in the team you led at [Company]?"
 
-Ask all questions in a single numbered list. Wait for answers before writing.
+**Use `AskUserQuestion` — do not write questions as plain text. Ask one question at a time.**
 
-Rules for questions:
+For each question, call `AskUserQuestion` with a single question, then wait for the answer before asking the next:
+
+1. Set `multiSelect: true`
+2. Generate exactly 3 pre-populated options using this priority order:
+   - **First**: any verified fact already saved in memory for that company (e.g. `memory/user_exp_{slug}.md`)
+   - **Second**: plausible inferences from the CV wording (e.g. "Led team of 2" from CV → option "Led a team of 2 engineers")
+   - **Third**: a reasonable generic answer typical for that role level/domain (e.g. "~50,000 MAU" for a mid-size SaaS)
+3. Set option 4 to: label `"Other / Combine"`, description `"I'll type a custom answer or combine the above"` — always last
+
+After all questions are answered, summarise the confirmed answers as a numbered list and use `AskUserQuestion` to ask:
+- Question: "Do these answers look correct? You can revise before I write the CV and cover letter."
+- `multiSelect: false`
+- Option 1: `"Looks good, proceed"` — description: "Use these answers as-is"
+- Option 2: `"I want to revise"` — description: "I'll tell you which answer to change"
+
+If the user chooses "I want to revise", let them say which answer to update (free text via the notes field or a follow-up message), update your record, re-summarise, and confirm again before proceeding.
+
+Rules:
 - Only ask about things that appear in the job post requirements
-- Never invent details: only use what the user confirms
-- If the user says "I don't remember" or "skip", note it and do not include unverified claims
+- Never invent details: only use what the user confirms via selection or "Other / Combine"
+- If the user selects nothing or "Other / Combine" with no notes, note it and omit that claim from the output
+- Treat selected options as confirmed facts; treat "Other / Combine" + notes as the user's confirmed answer
 
 ### 5. Save verified experience to memory
 
