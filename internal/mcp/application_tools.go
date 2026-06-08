@@ -25,6 +25,8 @@ func (s *Server) registerApplicationTools() {
 			mcplib.WithString("notes", mcplib.Description("Optional notes about the application")),
 			mcplib.WithString("job_url", mcplib.Description("Original URL of the job post, if sourced from a URL")),
 			mcplib.WithString("job_summary", mcplib.Description("2-3 sentence summary of the role and key requirements")),
+			mcplib.WithNumber("match_score", mcplib.Description("CV-to-job match percentage 0-100 from tailoring assessment")),
+			mcplib.WithString("tailoring_notes", mcplib.Description("Tailoring assessment: strengths, gaps, and plan from step 3")),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			company := req.GetString("company", "")
@@ -37,6 +39,12 @@ func (s *Server) registerApplicationTools() {
 			notes := req.GetString("notes", "")
 			jobURL := req.GetString("job_url", "")
 			jobSummary := req.GetString("job_summary", "")
+			tailoringNotes := req.GetString("tailoring_notes", "")
+			var matchScore *int
+			if _, ok := req.GetArguments()["match_score"]; ok {
+				v := req.GetInt("match_score", 0)
+				matchScore = &v
+			}
 
 			folderPath, err := fs.CreateApplication(s.root, fs.ApplicationRequest{
 				Company:            company,
@@ -55,14 +63,16 @@ func (s *Server) registerApplicationTools() {
 			}
 
 			id, err := s.store.UpsertApplication(db.Application{
-				Company:     company,
-				Role:        role,
-				AppliedDate: "", // set manually by user when they actually submit
-				BaseCVUsed:  baseCVUsed,
-				Notes:       notes,
-				FolderPath:  folderPath,
-				JobURL:      jobURL,
-				JobSummary:  jobSummary,
+				Company:        company,
+				Role:           role,
+				AppliedDate:    "", // set manually by user when they actually submit
+				BaseCVUsed:     baseCVUsed,
+				Notes:          notes,
+				FolderPath:     folderPath,
+				JobURL:         jobURL,
+				JobSummary:     jobSummary,
+				MatchScore:     matchScore,
+				TailoringNotes: tailoringNotes,
 			})
 			if err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("saving application to DB: %v", err)), nil

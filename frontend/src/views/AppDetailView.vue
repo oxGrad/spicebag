@@ -153,6 +153,32 @@
              class="text-sm text-blue-600 hover:underline break-all block mb-2">{{ detail.app.JobURL }}</a>
           <p v-if="detail.app.JobSummary" class="text-sm text-gray-600 leading-relaxed">{{ detail.app.JobSummary }}</p>
         </div>
+        <div v-if="detail.app.TailoringNotes">
+          <h2 class="font-semibold mb-3 flex items-center gap-2">
+            Tailoring Assessment
+            <span
+              v-if="detail.app.MatchScore != null"
+              class="text-xs font-semibold px-2 py-0.5 rounded"
+              :class="matchBadgeClass(detail.app.MatchScore)"
+            >{{ detail.app.MatchScore }}% match</span>
+          </h2>
+          <div class="space-y-2">
+            <div v-if="tailoring.strengths" class="rounded-md bg-green-50 border border-green-100 px-3 py-2">
+              <span class="text-xs font-semibold text-green-700 uppercase tracking-wide">Strengths</span>
+              <p class="text-sm text-green-900 mt-1 leading-relaxed">{{ tailoring.strengths }}</p>
+            </div>
+            <div v-if="tailoring.gaps" class="rounded-md bg-red-50 border border-red-100 px-3 py-2">
+              <span class="text-xs font-semibold text-red-700 uppercase tracking-wide">Gaps</span>
+              <p class="text-sm text-red-900 mt-1 leading-relaxed">{{ tailoring.gaps }}</p>
+            </div>
+            <div v-if="tailoring.plan" class="rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tailoring Plan</span>
+              <p class="text-sm text-gray-700 mt-1 leading-relaxed">{{ tailoring.plan }}</p>
+            </div>
+            <p v-if="!tailoring.strengths && !tailoring.gaps && !tailoring.plan"
+               class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{{ detail.app.TailoringNotes }}</p>
+          </div>
+        </div>
         <div>
           <h2 class="font-semibold mb-1">Source</h2>
           <select v-model="selectedSource" @change="saveSource" class="border rounded px-2 py-1.5 text-sm w-full">
@@ -380,6 +406,26 @@ const appId = computed(() => route.params.id)
 const activePDF = computed(() =>
   activeDoc.value ? pdfs.value.find(p => p.doc_type === activeDoc.value.key) ?? null : null
 )
+
+const tailoring = computed(() => {
+  const raw = detail.value?.app?.TailoringNotes || ''
+  const extract = (label) => {
+    const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n(?:Strengths|Gaps|Tailoring plan):|$)`, 'i')
+    const m = raw.match(re)
+    return m ? m[1].trim() : ''
+  }
+  return {
+    strengths: extract('Strengths'),
+    gaps: extract('Gaps'),
+    plan: extract('Tailoring plan'),
+  }
+})
+
+function matchBadgeClass(score) {
+  if (score >= 80) return 'bg-green-100 text-green-800'
+  if (score >= 60) return 'bg-yellow-100 text-yellow-800'
+  return 'bg-red-100 text-red-800'
+}
 
 function triggerRefresh() {
   previewKey.value++

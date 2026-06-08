@@ -28,13 +28,21 @@ Extract: company name, role title, today's date (YYYY-MM-DD). If company or role
 
 ### 3. Assess tailoring need
 
-Compare the job requirements against the CV. State your assessment clearly before proceeding:
+Compare the job requirements against the CV. State your assessment clearly before proceeding, in this exact structure:
 
-**As-is** (minor wording only): use when the CV already covers ≥80% of the key requirements with matching terminology. State: *"CV is a strong match: will use as-is with minor emphasis adjustments."*
+```
+Match: {N}%
 
-**Light tailoring**: use when 1–2 sections need reordering or specific bullets need to move up/down. State what you'll change and why.
+Strengths: [what the CV already covers well for this role]
+Gaps: [requirements in the job post not well covered by the CV]
+Tailoring plan: [as-is / light / full — and what specifically will change]
+```
 
-**Full tailoring**: use when the role has a materially different emphasis (e.g., backend CV for a full-stack role). State the structural changes planned.
+- **As-is** (≥80%): CV already covers the key requirements with matching terminology; minor wording/emphasis only
+- **Light** (60–79%): 1–2 sections need reordering or specific bullets need to move up/down
+- **Full** (<60%): role has materially different emphasis; state structural changes planned
+
+Save the full block above (excluding the code fence) as `tailoring_assessment` — you will pass it to `create_application` in step 7.
 
 Present this assessment and wait for the user to confirm before writing anything.
 
@@ -143,6 +151,8 @@ Call `create_application` with:
 - `base_cv_used`: filename of the base CV selected in step 2
 - `job_url`: the original URL if $ARGUMENTS was a URL, otherwise omit
 - `job_summary`: the 2–3 sentence summary written in step 1 if a URL was provided, otherwise omit
+- `match_score`: the integer percentage from step 3 (e.g. 65)
+- `tailoring_notes`: the full tailoring assessment block saved in step 3
 
 ### 8. Report
 

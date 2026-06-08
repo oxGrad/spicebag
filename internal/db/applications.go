@@ -8,16 +8,18 @@ import (
 )
 
 type Application struct {
-	ID          int64
-	Company     string
-	Role        string
-	AppliedDate string
-	BaseCVUsed  string
-	Notes       string
-	FolderPath  string
-	Source      string
-	JobURL      string
-	JobSummary  string
+	ID              int64
+	Company         string
+	Role            string
+	AppliedDate     string
+	BaseCVUsed      string
+	Notes           string
+	FolderPath      string
+	Source          string
+	JobURL          string
+	JobSummary      string
+	MatchScore      *int   // nil if not assessed
+	TailoringNotes  string
 }
 
 type StatusHistoryEntry struct {
@@ -35,14 +37,15 @@ type ExperienceStats struct {
 
 func (s *Store) UpsertApplication(app Application) (int64, error) {
 	res, err := s.db.Exec(`
-		INSERT INTO applications (company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO applications (company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary, match_score, tailoring_notes)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(folder_path) DO UPDATE SET
 			company=excluded.company, role=excluded.role,
 			applied_date=excluded.applied_date, base_cv_used=excluded.base_cv_used,
 			notes=excluded.notes, source=excluded.source,
-			job_url=excluded.job_url, job_summary=excluded.job_summary`,
-		app.Company, app.Role, app.AppliedDate, app.BaseCVUsed, app.Notes, app.FolderPath, app.Source, app.JobURL, app.JobSummary,
+			job_url=excluded.job_url, job_summary=excluded.job_summary,
+			match_score=excluded.match_score, tailoring_notes=excluded.tailoring_notes`,
+		app.Company, app.Role, app.AppliedDate, app.BaseCVUsed, app.Notes, app.FolderPath, app.Source, app.JobURL, app.JobSummary, app.MatchScore, app.TailoringNotes,
 	)
 	if err != nil {
 		return 0, err
@@ -51,7 +54,7 @@ func (s *Store) UpsertApplication(app Application) (int64, error) {
 }
 
 func (s *Store) ListApplications() ([]Application, error) {
-	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications ORDER BY id DESC`)
+	rows, err := s.db.Query(`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary, match_score, tailoring_notes FROM applications ORDER BY id DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +63,7 @@ func (s *Store) ListApplications() ([]Application, error) {
 	var apps []Application
 	for rows.Next() {
 		var a Application
-		if err := rows.Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary); err != nil {
+		if err := rows.Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary, &a.MatchScore, &a.TailoringNotes); err != nil {
 			return nil, err
 		}
 		apps = append(apps, a)
@@ -112,7 +115,7 @@ type ApplicationWithStatus struct {
 // ListApplicationsWithStatus returns all applications with their latest status.
 func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 	rows, err := s.db.Query(`
-		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary,
+		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary, a.match_score, a.tailoring_notes,
 		       COALESCE(
 		         (SELECT status FROM application_status_history
 		          WHERE application_id = a.id
@@ -131,7 +134,7 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 	for rows.Next() {
 		var a ApplicationWithStatus
 		if err := rows.Scan(
-			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary,
+			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary, &a.MatchScore, &a.TailoringNotes,
 			&a.CurrentStatus,
 		); err != nil {
 			return nil, err
@@ -144,7 +147,7 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 // ListApplicationsByBaseCV returns all applications that used the given CV filename as their base.
 func (s *Store) ListApplicationsByBaseCV(baseCVName string) ([]ApplicationWithStatus, error) {
 	rows, err := s.db.Query(`
-		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary,
+		SELECT a.id, a.company, a.role, a.applied_date, a.base_cv_used, a.notes, a.folder_path, a.source, a.job_url, a.job_summary, a.match_score, a.tailoring_notes,
 		       COALESCE(
 		         (SELECT status FROM application_status_history
 		          WHERE application_id = a.id
@@ -164,7 +167,7 @@ func (s *Store) ListApplicationsByBaseCV(baseCVName string) ([]ApplicationWithSt
 	for rows.Next() {
 		var a ApplicationWithStatus
 		if err := rows.Scan(
-			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary,
+			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary, &a.MatchScore, &a.TailoringNotes,
 			&a.CurrentStatus,
 		); err != nil {
 			return nil, err
@@ -178,9 +181,9 @@ func (s *Store) ListApplicationsByBaseCV(baseCVName string) ([]ApplicationWithSt
 func (s *Store) GetApplicationByID(id int64) (Application, error) {
 	var a Application
 	err := s.db.QueryRow(
-		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary FROM applications WHERE id = ?`,
+		`SELECT id, company, role, applied_date, base_cv_used, notes, folder_path, source, job_url, job_summary, match_score, tailoring_notes FROM applications WHERE id = ?`,
 		id,
-	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary)
+	).Scan(&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary, &a.MatchScore, &a.TailoringNotes)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Application{}, fmt.Errorf("application %d not found: %w", id, sql.ErrNoRows)
 	}

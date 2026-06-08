@@ -16,6 +16,7 @@
           <th class="text-left px-4 py-3">Company</th>
           <th class="text-left px-4 py-3">Role</th>
           <th class="text-left px-4 py-3">Applied</th>
+          <th class="text-left px-4 py-3">Match</th>
           <th class="text-left px-4 py-3">Source</th>
           <th class="text-left px-4 py-3">Status</th>
         </tr>
@@ -36,6 +37,14 @@
           <td class="px-4 py-3 font-medium">{{ app.Company }}</td>
           <td class="px-4 py-3 text-gray-600">{{ app.Role }}</td>
           <td class="px-4 py-3" :class="app.AppliedDate ? 'text-gray-500' : 'text-gray-300'">{{ app.AppliedDate || '—' }}</td>
+          <td class="px-4 py-3">
+            <span
+              v-if="app.MatchScore != null"
+              class="px-2 py-0.5 rounded text-xs font-semibold"
+              :class="matchBadgeClass(app.MatchScore)"
+            >{{ app.MatchScore }}%</span>
+            <span v-else class="text-gray-300">—</span>
+          </td>
           <td class="px-4 py-3 text-gray-500 text-xs">{{ app.Source || '—' }}</td>
           <td class="px-4 py-3">
             <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="badgeClass(app.CurrentStatus)">
@@ -85,6 +94,12 @@ function clearFilter() {
 onMounted(async () => {
   allApps.value = await api.apps.list()
 })
+
+function matchBadgeClass(score) {
+  if (score >= 80) return 'bg-green-100 text-green-800'
+  if (score >= 60) return 'bg-yellow-100 text-yellow-800'
+  return 'bg-red-100 text-red-800'
+}
 
 function badgeClass(status) {
   const map = {
