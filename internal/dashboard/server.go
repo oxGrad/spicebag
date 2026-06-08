@@ -92,6 +92,17 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/memories", s.handleAPIMemoriesList)
 	s.mux.HandleFunc("GET /api/memories/{name}", s.handleAPIMemoriesGet)
 
+	s.mux.HandleFunc("GET /api/scrape/companies", s.handleAPIScrapeCompaniesList)
+	s.mux.HandleFunc("POST /api/scrape/companies", s.handleAPIScrapeCompanyCreate)
+	s.mux.HandleFunc("DELETE /api/scrape/companies/{id}", s.handleAPIScrapeCompanyDelete)
+	s.mux.HandleFunc("GET /api/scrape/roles", s.handleAPIScrapeRolesList)
+	s.mux.HandleFunc("POST /api/scrape/roles", s.handleAPIScrapeRoleCreate)
+	s.mux.HandleFunc("DELETE /api/scrape/roles/{id}", s.handleAPIScrapeRoleDelete)
+	s.mux.HandleFunc("GET /api/scrape/prefs", s.handleAPIScrapePrefsGet)
+	s.mux.HandleFunc("POST /api/scrape/prefs", s.handleAPIScrapePrefsUpdate)
+	s.mux.HandleFunc("GET /api/scrape/jobs", s.handleAPIScrapeJobsList)
+	s.mux.HandleFunc("POST /api/scrape/jobs/{id}/status", s.handleAPIScrapeJobStatus)
+
 	s.mux.HandleFunc("/", s.handleSPA)
 }
 
