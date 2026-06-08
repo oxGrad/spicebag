@@ -151,11 +151,12 @@ func (s *Server) registerSaveScrapedJobs() {
 			if err := json.Unmarshal([]byte(jobsJSON), &entries); err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("invalid jobs JSON: %v", err)), nil
 			}
+			names := s.companyNames()
 			var jobs []db.ScrapedJob
 			for _, e := range entries {
 				jobs = append(jobs, db.ScrapedJob{
 					CompanyID:   e.CompanyID,
-					CompanyName: s.companyNameByID(e.CompanyID),
+					CompanyName: names[e.CompanyID],
 					Title:       e.Title,
 					Location:    e.Location,
 					URL:         e.URL,
@@ -172,15 +173,15 @@ func (s *Server) registerSaveScrapedJobs() {
 	)
 }
 
-func (s *Server) companyNameByID(id int64) string {
+// companyNames returns a map of company id → name, fetched once.
+func (s *Server) companyNames() map[int64]string {
+	out := map[int64]string{}
 	companies, err := s.store.ListScrapeCompanies()
 	if err != nil {
-		return ""
+		return out
 	}
 	for _, c := range companies {
-		if c.ID == id {
-			return c.Name
-		}
+		out[c.ID] = c.Name
 	}
-	return ""
+	return out
 }

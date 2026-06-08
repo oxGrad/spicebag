@@ -30,8 +30,14 @@ func (s SmartRecruiters) FetchJobs(ctx context.Context, token string) ([]Job, er
 	}
 	jobs := make([]Job, 0, len(resp.Content))
 	for _, j := range resp.Content {
-		loc := strings.TrimPrefix(strings.Join([]string{j.Location.City, j.Location.Country}, ", "), ", ")
-		jobs = append(jobs, Job{Title: j.Name, Location: loc, URL: j.Ref})
+		var parts []string
+		if j.Location.City != "" {
+			parts = append(parts, j.Location.City)
+		}
+		if j.Location.Country != "" {
+			parts = append(parts, j.Location.Country)
+		}
+		jobs = append(jobs, Job{Title: j.Name, Location: strings.Join(parts, ", "), URL: j.Ref})
 	}
 	return jobs, nil
 }
