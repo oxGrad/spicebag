@@ -78,6 +78,7 @@ func Registry() map[string]Adapter {
 	return map[string]Adapter{
 		"greenhouse": Greenhouse{},
 		"lever":      Lever{},
+		"ashby":      Ashby{},
 	}
 }
 

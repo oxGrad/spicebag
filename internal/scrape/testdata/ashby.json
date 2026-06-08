@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "title": "Site Reliability Engineer",
+      "location": "Remote - Worldwide",
+      "jobUrl": "https://jobs.ashbyhq.com/acme/111"
+    },
+    {
+      "title": "Sales Lead",
+      "location": "San Francisco",
+      "jobUrl": "https://jobs.ashbyhq.com/acme/222"
+    }
+  ]
+}
