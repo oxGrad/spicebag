@@ -17,10 +17,12 @@ func (s *Store) ApplicationsPerDay(from, to string) ([]DayCount, error) {
 		SELECT strftime('%Y-%m-%d', applied_date) AS day, COUNT(*) AS count
 		FROM applications
 		WHERE applied_date != ''
-		AND id NOT IN (
-			SELECT DISTINCT application_id FROM application_status_history
-			WHERE status = 'skipped'
-		)
+		AND COALESCE(
+			(SELECT status FROM application_status_history
+			 WHERE application_id = applications.id
+			 ORDER BY changed_at DESC, id DESC LIMIT 1),
+			'unknown'
+		) != 'skipped'
 	`
 	var args []any
 	if from != "" {
@@ -65,10 +67,12 @@ func (s *Store) ApplicationsPerMonth(from, to string) ([]MonthCount, error) {
 	q := `
 		SELECT strftime('%Y-%m', applied_date) AS month, COUNT(*) AS count
 		FROM applications
-		WHERE id NOT IN (
-			SELECT DISTINCT application_id FROM application_status_history
-			WHERE status = 'skipped'
-		)
+		WHERE COALESCE(
+			(SELECT status FROM application_status_history
+			 WHERE application_id = applications.id
+			 ORDER BY changed_at DESC, id DESC LIMIT 1),
+			'unknown'
+		) != 'skipped'
 	`
 	var args []any
 	if from != "" {
