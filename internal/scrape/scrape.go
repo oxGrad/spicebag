@@ -76,9 +76,10 @@ var (
 // because it needs the company's CareersURL.
 func Registry() map[string]Adapter {
 	return map[string]Adapter{
-		"greenhouse": Greenhouse{},
-		"lever":      Lever{},
-		"ashby":      Ashby{},
+		"greenhouse":     Greenhouse{},
+		"lever":          Lever{},
+		"ashby":          Ashby{},
+		"smartrecruiters": SmartRecruiters{},
 	}
 }
 
