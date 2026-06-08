@@ -48,6 +48,7 @@ func NewServer(root, dbPath, memoryDBPath, gotenbergURL string) (*Server, error)
 	s.registerApplicationTools()
 	s.registerQuestionTools()
 	s.registerMemoryTools()
+	s.registerScrapeTools()
 
 	return s, nil
 }
