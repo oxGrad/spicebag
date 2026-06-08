@@ -76,7 +76,7 @@ var (
 // because it needs the company's CareersURL.
 func Registry() map[string]Adapter {
 	return map[string]Adapter{
-		// adapters registered by later tasks
+		"greenhouse": Greenhouse{},
 	}
 }
 

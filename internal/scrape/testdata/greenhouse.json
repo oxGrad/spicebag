@@ -1,0 +1,16 @@
+{
+  "jobs": [
+    {
+      "id": 42,
+      "title": "Senior SRE",
+      "absolute_url": "https://boards.greenhouse.io/acme/jobs/42",
+      "location": { "name": "Remote - Anywhere" }
+    },
+    {
+      "id": 43,
+      "title": "Office Manager",
+      "absolute_url": "https://boards.greenhouse.io/acme/jobs/43",
+      "location": { "name": "New York, NY" }
+    }
+  ]
+}
