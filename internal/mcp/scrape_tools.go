@@ -85,12 +85,18 @@ func (s *Server) registerFetchATSJobs() {
 					time.Sleep(jitter())
 				}
 				now := time.Now().Format("2006-01-02 15:04:05")
-				adapter, ok := reg[c.ATSPlatform]
-				if !ok {
-					msg := "Unsupported platform: " + c.ATSPlatform
-					s.store.UpdateScrapeCompanyStatus(c.ID, now, "error", msg, 0) //nolint:errcheck
-					errs = append(errs, outErr{Company: c.Name, Error: msg})
-					continue
+				var adapter scrape.Adapter
+				if c.ATSPlatform == "workday" {
+					adapter = scrape.Workday{CareersURL: c.CareersURL}
+				} else {
+					a, ok := reg[c.ATSPlatform]
+					if !ok {
+						msg := "Unsupported platform: " + c.ATSPlatform
+						s.store.UpdateScrapeCompanyStatus(c.ID, now, "error", msg, 0) //nolint:errcheck
+						errs = append(errs, outErr{Company: c.Name, Error: msg})
+						continue
+					}
+					adapter = a
 				}
 				fetched, ferr := adapter.FetchJobs(ctx, c.ATSToken)
 				if ferr != nil {
