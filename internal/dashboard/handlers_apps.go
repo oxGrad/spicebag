@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/oxGrad/spicebag/internal/db"
 )
@@ -89,6 +90,13 @@ func (s *Server) handleAPIAppStatusUpdate(w http.ResponseWriter, r *http.Request
 	if err := s.store.AddStatusHistory(id, status, notes); err != nil {
 		http.Error(w, fmt.Sprintf("update status: %v", err), http.StatusInternalServerError)
 		return
+	}
+	if status == "applied" {
+		app, err := s.store.GetApplicationByID(id)
+		if err == nil && app.AppliedDate == "" {
+			today := time.Now().Format("2006-01-02")
+			s.store.UpdateAppliedDate(id, today) //nolint:errcheck
+		}
 	}
 	history, err := s.store.GetStatusHistory(id)
 	if err != nil {
