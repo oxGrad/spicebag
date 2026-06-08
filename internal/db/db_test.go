@@ -161,6 +161,24 @@ func TestGetApplicationByIDNotFound(t *testing.T) {
 	assert.True(t, errors.Is(err, sql.ErrNoRows), "expected sql.ErrNoRows, got: %v", err)
 }
 
+func TestMigration007Tables(t *testing.T) {
+	store := openTestStore(t)
+	tables := []string{"scrape_companies", "scrape_roles", "scrape_prefs", "scraped_jobs"}
+	for _, table := range tables {
+		var name string
+		err := store.DB().QueryRow(
+			"SELECT name FROM sqlite_master WHERE type='table' AND name=?", table,
+		).Scan(&name)
+		require.NoError(t, err, "table %s missing", table)
+		assert.Equal(t, table, name)
+	}
+
+	// Default prefs row must exist.
+	var n int
+	require.NoError(t, store.DB().QueryRow(`SELECT COUNT(*) FROM scrape_prefs WHERE id=1`).Scan(&n))
+	assert.Equal(t, 1, n)
+}
+
 func TestListApplicationsWithStatusNoHistory(t *testing.T) {
 	store := openTestStore(t)
 
