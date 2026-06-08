@@ -732,7 +732,7 @@ function badgeClass(status) {
     rejected:   'bg-red-100 text-red-800',
     withdrawn:  'bg-red-100 text-red-800',
     ghosted:    'bg-red-100 text-red-800',
-    skipped:    'bg-gray-100 text-gray-500',
+    skipped:    'bg-orange-100 text-orange-700',
   }
   return map[status?.toLowerCase()] ?? 'bg-blue-100 text-blue-800'
 }
