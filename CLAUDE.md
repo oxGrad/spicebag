@@ -38,7 +38,7 @@ just clean               # removes ./spicebag binary and internal/dashboard/ui/
 
 **Internal package layout:**
 - `internal/config` — TOML config (`~/.config/spicebag/config.toml`); dashboard port + Gotenberg URL
-- `internal/db` — SQLite store; schema: `experience`, `applications`, `application_status_history`, `scraped_jobs`, `scrape_companies`, `scrape_preferences` tables; `db.SetMaxOpenConns(1)` enforces single writer
+- `internal/db` — SQLite store; schema: `experience`, `applications`, `application_status_history`, `scraped_jobs`, `scrape_companies`, `scrape_roles`, `scrape_prefs` tables; `db.SetMaxOpenConns(1)` enforces single writer
 - `internal/fs` — filesystem CRUD for CVs, cover letters, themes, applications (all stored as `.html` files)
 - `internal/mcp` — MCP tool registration; each domain has its own `*_tools.go` file; `server.go` wires them and exposes `CallTool` for in-process testing
 - `internal/dashboard` — HTTP handlers split by domain (`handlers_cv.go`, `handlers_apps.go`, etc.); SPA fallback in `server.go:handleSPA`
