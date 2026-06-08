@@ -55,6 +55,32 @@ func TestSaveScrapedJobs(t *testing.T) {
 	assert.Len(t, jobs, 2)
 }
 
+func TestCreateApplicationLinksScrapedJob(t *testing.T) {
+	_, srv := setup(t)
+	store := srv.Store()
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u"})
+	store.SaveScrapedJobs([]db.ScrapedJob{
+		{CompanyID: c.ID, CompanyName: "Acme", Title: "SRE", URL: "https://boards.greenhouse.io/acme/jobs/42"},
+	})
+
+	_, err := srv.CallTool(context.Background(), "create_application", map[string]any{
+		"company":              "Acme",
+		"role":                 "SRE",
+		"date":                 "2026-06-08",
+		"cv_content":           "<h1>CV</h1>",
+		"cover_letter_content": "<p>CL</p>",
+		"job_post_content":     "JD",
+		"job_url":              "https://boards.greenhouse.io/acme/jobs/42?utm_source=x",
+	})
+	require.NoError(t, err)
+
+	newJobs, _ := store.ListScrapedJobs("new")
+	assert.Len(t, newJobs, 0)
+	applied, _ := store.ListScrapedJobs("applied")
+	require.Len(t, applied, 1)
+	assert.True(t, applied[0].AppliedApplicationID.Valid)
+}
+
 func TestGetScrapePreferences(t *testing.T) {
 	_, srv := setup(t) // helper in internal/mcp/mcp_test.go: returns (root, *Server)
 	store := srv.Store()
