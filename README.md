@@ -14,7 +14,8 @@ No more generic CVs. Just perfectly seasoned applications for every role you app
 - **Flavor extraction** — pulls experience stats (years per role type) from CV frontmatter into SQLite
 - **Application tracking** — tracks every job application with full status history
 - **PDF export** — exports to print-quality PDF via Gotenberg (no browser print dialogs)
-- **Three slash commands** — `/customize-cv`, `/write-cover-letter`, `/apply` directly in Claude Code
+- **Four slash commands** — `/customize-cv`, `/write-cover-letter`, `/apply`, `/scrape-jobs` directly in Claude Code
+- **Job scraping** — fetch live listings from company ATS pages and surface matches against your target roles
 - **Dashboard** — browse and manage everything at `http://localhost:8080`
 
 ## Prerequisites
@@ -76,6 +77,7 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 | `/customize-cv <job post or role>` | Select the recipe — tailor your most relevant base CV for the role and save a new version |
 | `/write-cover-letter <job post>` | A fresh cover letter that explains why you're the perfect spice blend for their team |
 | `/apply <job post>` | Full application in one pass: tailored CV + cover letter + saved job post |
+| `/scrape-jobs` | Fetch live job listings from your saved ATS companies and surface matches against your target roles |
 
 ## The seasoning process
 
@@ -104,7 +106,23 @@ Use these inside Claude Code. Arguments can be a file reference (`@job-post.md`)
 
 These tools are available to Claude Code via the MCP server:
 
-`list_cvs`, `read_cv`, `write_cv`, `list_cover_letters`, `read_cover_letter`, `write_cover_letter`, `get_experience_stats`, `create_application`, `list_applications`, `export_pdf`
+`list_cvs`, `read_cv`, `write_cv`, `list_cover_letters`, `read_cover_letter`, `write_cover_letter`, `get_experience_stats`, `create_application`, `list_applications`, `export_pdf`, `get_scrape_preferences`, `fetch_ats_jobs`, `save_scraped_jobs`
+
+| Tool | What it does |
+|---|---|
+| `get_scrape_preferences` | Returns saved scrape companies, target roles, and location preferences |
+| `fetch_ats_jobs` | Fetches current job listings from all registered ATS companies |
+| `save_scraped_jobs` | Saves matched jobs for dashboard review |
+
+## Job Scraping
+
+Spice Bag can pull live job listings from company careers pages and surface roles that match your preferences.
+
+**Setup:** In the dashboard Settings → Job Scraping, add the careers page URLs of companies you want to track (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Breezy, BambooHR, Personio, and Workday are supported). Set your target role keywords and location preferences.
+
+**Run:** Type `/scrape-jobs` in Claude Code. The skill fetches listings via `fetch_ats_jobs`, filters for matches, and saves them via `save_scraped_jobs`.
+
+**Review:** Open the dashboard Jobs page to see matched listings. Click **Apply** next to any role to get a copyable `/apply <url>` command — paste it into Claude Code to kick off a full tailored application.
 
 ## CV frontmatter (for experience stats)
 
