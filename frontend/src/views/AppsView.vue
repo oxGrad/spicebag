@@ -34,7 +34,10 @@
           class="hover:bg-gray-50 cursor-pointer"
           @click="$router.push(`/apps/${app.ID}`)"
         >
-          <td class="px-4 py-3 font-medium">{{ app.Company }}</td>
+          <td class="px-4 py-3 font-medium">
+            {{ app.Company }}
+            <span v-if="app.FromScrape" class="ml-1.5 text-xs bg-purple-100 text-purple-700 rounded px-1.5 py-0.5 align-middle">Scraped</span>
+          </td>
           <td class="px-4 py-3 text-gray-600">{{ app.Role }}</td>
           <td class="px-4 py-3" :class="app.AppliedDate ? 'text-gray-500' : 'text-gray-300'">{{ app.AppliedDate || '—' }}</td>
           <td class="px-4 py-3">

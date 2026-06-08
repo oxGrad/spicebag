@@ -90,6 +90,59 @@
     </div>
   </div>
 
+  <!-- Job Scraping tab -->
+  <div v-if="activeTab === 'scraping'" class="max-w-2xl">
+    <section class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Scrape Companies</h2>
+      <form @submit.prevent="addCompany" class="flex gap-2 mb-3">
+        <input v-model="newCompanyURL" type="text" placeholder="Paste a careers URL (Greenhouse, Lever, Ashby, …)"
+          class="flex-1 border rounded px-2 py-1.5 text-sm" />
+        <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Add</button>
+      </form>
+      <p v-if="companyError" class="text-xs text-red-600 mb-2">{{ companyError }}</p>
+      <ul class="divide-y divide-gray-100">
+        <li v-for="c in companies" :key="c.id" class="flex items-center justify-between py-2 text-sm">
+          <div>
+            <span class="font-medium">{{ c.name }}</span>
+            <span class="ml-2 text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{{ c.ats_platform }}</span>
+            <div class="text-xs mt-0.5" :class="c.last_scrape_status === 'error' ? 'text-red-600' : 'text-gray-400'">
+              <template v-if="c.last_scrape_status === 'ok'">✅ {{ c.last_job_count }} jobs · {{ (c.last_scraped_at||'').slice(0,16) }}</template>
+              <template v-else-if="c.last_scrape_status === 'error'">🔴 {{ c.last_scrape_error }} · {{ (c.last_scraped_at||'').slice(0,16) }}</template>
+              <template v-else>Not scraped yet</template>
+            </div>
+          </div>
+          <button @click="deleteCompany(c.id)" class="text-xs text-gray-400 hover:text-red-600">Delete</button>
+        </li>
+      </ul>
+    </section>
+
+    <section class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Target Roles</h2>
+      <form @submit.prevent="addRole" class="flex gap-2 mb-3">
+        <input v-model="newRole" type="text" placeholder="e.g. SRE, DevOps, Platform Engineer"
+          class="flex-1 border rounded px-2 py-1.5 text-sm" />
+        <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Add</button>
+      </form>
+      <div class="flex flex-wrap gap-2">
+        <span v-for="r in roles" :key="r.id" class="flex items-center gap-1 bg-gray-100 rounded-full px-2.5 py-1 text-xs">
+          {{ r.keyword }}
+          <button @click="deleteRole(r.id)" class="text-gray-400 hover:text-red-600">×</button>
+        </span>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Location Preferences</h2>
+      <label class="block text-xs text-gray-500 mb-1">Home timezone</label>
+      <input v-model="homeTimezone" type="text" placeholder="UTC+7" class="border rounded px-2 py-1.5 text-sm w-32 mb-3" />
+      <label class="block text-xs text-gray-500 mb-1">Acceptance notes (Claude reads this)</label>
+      <textarea v-model="locationNotes" rows="4" class="w-full border rounded px-2 py-1.5 text-sm"
+        placeholder="Accept: anywhere/worldwide; any role whose required timezone window includes UTC+7; APAC, Asia, Southeast Asia, Indonesia. Reject: US-only, EMEA-only, Americas-only."></textarea>
+      <button @click="savePrefs" class="mt-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Save preferences</button>
+      <span v-if="prefsSaved" class="ml-2 text-xs text-green-600">Saved</span>
+    </section>
+  </div>
+
   <!-- Sources tab -->
   <div v-if="activeTab === 'sources'" class="max-w-md space-y-6">
     <div class="bg-white rounded-lg shadow divide-y">
@@ -145,8 +198,9 @@ const route = useRoute()
 const tabs = [
   { id: 'themes', label: 'Themes' },
   { id: 'sources', label: 'Sources' },
+  { id: 'scraping', label: 'Job Scraping' },
 ]
-const activeTab = ref(route.query.tab === 'sources' ? 'sources' : 'themes')
+const activeTab = ref(route.query.tab === 'sources' ? 'sources' : route.query.tab === 'scraping' ? 'scraping' : 'themes')
 
 // Themes state
 const themes       = ref([])
@@ -161,9 +215,49 @@ const sources        = ref([])
 const newSourceName  = ref('')
 const confirmDeleteId = ref(null)
 
+// Scraping state
+const companies     = ref([])
+const roles         = ref([])
+const newCompanyURL = ref('')
+const newRole       = ref('')
+const companyError  = ref('')
+const homeTimezone  = ref('')
+const locationNotes = ref('')
+const prefsSaved    = ref(false)
+
+async function loadScrape() {
+  companies.value = await api.scrape.companies()
+  roles.value = await api.scrape.roles()
+  const p = await api.scrape.prefs()
+  homeTimezone.value = p.home_timezone
+  locationNotes.value = p.location_notes
+}
+async function addCompany() {
+  companyError.value = ''
+  try {
+    await api.scrape.addCompany(newCompanyURL.value)
+    newCompanyURL.value = ''
+    await loadScrape()
+  } catch (e) {
+    companyError.value = 'Could not add — unsupported or invalid careers URL.'
+  }
+}
+async function deleteCompany(id) { await api.scrape.deleteCompany(id); await loadScrape() }
+async function addRole() {
+  if (!newRole.value.trim()) return
+  await api.scrape.addRole(newRole.value.trim()); newRole.value = ''; await loadScrape()
+}
+async function deleteRole(id) { await api.scrape.deleteRole(id); await loadScrape() }
+async function savePrefs() {
+  await api.scrape.updatePrefs(homeTimezone.value, locationNotes.value)
+  prefsSaved.value = true
+  setTimeout(() => { prefsSaved.value = false }, 1500)
+}
+
 onMounted(async () => {
   themes.value  = await api.themes.list()
   sources.value = await api.sources.list()
+  await loadScrape()
 })
 
 function toggleDropdown(name) {
