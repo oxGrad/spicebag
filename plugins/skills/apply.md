@@ -33,16 +33,29 @@ Compare the job requirements against the CV. State your assessment clearly befor
 ```
 Match: {N}%
 
-Strengths: [what the CV already covers well for this role]
-Gaps: [requirements in the job post not well covered by the CV]
-Tailoring plan: [as-is / light / full — and what specifically will change]
+Strengths:
+- [bullet]
+- [bullet]
+
+Gaps:
+- [bullet]
+- [bullet]
+
+Tailoring plan ({level}):
+- [bullet]
+- [bullet]
 ```
 
 - **As-is** (≥80%): CV already covers the key requirements with matching terminology; minor wording/emphasis only
 - **Light** (60–79%): 1–2 sections need reordering or specific bullets need to move up/down
 - **Full** (<60%): role has materially different emphasis; state structural changes planned
 
-Save the full block above (excluding the code fence) as `tailoring_assessment` — you will pass it to `create_application` in step 7.
+Rules for the assessment block:
+- Each section's content must use `- bullet` lines, not prose or semicolons
+- `Tailoring plan` heading must include the level in parentheses: `Tailoring plan (light):`, `Tailoring plan (full):`, etc.
+- Any free-form notes (salary flags, caveats) go after the block as plain text, not inside it
+
+Save the full block above (excluding the code fence and any trailing notes) as `tailoring_assessment` — you will pass it to `create_application` in step 7.
 
 Present this assessment and wait for the user to confirm before writing anything.
 
