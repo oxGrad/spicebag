@@ -25,12 +25,14 @@ func TestScrapeCompaniesCRUD(t *testing.T) {
 	assert.Equal(t, "never", list[0].LastScrapeStatus)
 
 	require.NoError(t, store.UpdateScrapeCompanyStatus(c.ID, "2026-06-08 10:00:00", "ok", "", 12))
-	list, _ = store.ListScrapeCompanies()
+	list, err = store.ListScrapeCompanies()
+	require.NoError(t, err)
 	assert.Equal(t, "ok", list[0].LastScrapeStatus)
 	assert.Equal(t, 12, list[0].LastJobCount)
 
 	require.NoError(t, store.DeleteScrapeCompany(c.ID))
-	list, _ = store.ListScrapeCompanies()
+	list, err = store.ListScrapeCompanies()
+	require.NoError(t, err)
 	assert.Len(t, list, 0)
 }
 
@@ -47,7 +49,8 @@ func TestScrapeRolesCRUD(t *testing.T) {
 	assert.Equal(t, "SRE", roles[0].Keyword)
 
 	require.NoError(t, store.DeleteScrapeRole(r.ID))
-	roles, _ = store.ListScrapeRoles()
+	roles, err = store.ListScrapeRoles()
+	require.NoError(t, err)
 	assert.Len(t, roles, 0)
 }
 
