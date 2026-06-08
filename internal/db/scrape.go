@@ -201,6 +201,9 @@ func (s *Store) LinkApplicationToScrapedJob(appID int64, jobURL string) (bool, e
 	if norm == "" {
 		return false, nil
 	}
+	// Full scan + Go-side normalization (not WHERE url = ?) because the stored
+	// scraped-job URL and the application's job URL may differ by query string
+	// or trailing slash; only their normalized forms are guaranteed to match.
 	rows, err := s.db.Query(`SELECT id, url FROM scraped_jobs WHERE status != 'applied'`)
 	if err != nil {
 		return false, err
@@ -219,6 +222,9 @@ func (s *Store) LinkApplicationToScrapedJob(appID int64, jobURL string) (bool, e
 		}
 	}
 	rows.Close()
+	if err := rows.Err(); err != nil {
+		return false, err
+	}
 	if matchID == 0 {
 		return false, nil
 	}
