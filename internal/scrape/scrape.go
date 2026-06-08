@@ -81,6 +81,7 @@ func Registry() map[string]Adapter {
 		"ashby":          Ashby{},
 		"smartrecruiters": SmartRecruiters{},
 		"workable":       Workable{},
+		"recruitee":      Recruitee{},
 	}
 }
 
