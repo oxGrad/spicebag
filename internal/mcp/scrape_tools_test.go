@@ -3,6 +3,7 @@ package mcp_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/oxGrad/spicebag/internal/db"
@@ -34,6 +35,24 @@ func TestFetchATSJobsRecordsStatus(t *testing.T) {
 	require.Len(t, list, 1)
 	assert.NotEqual(t, "never", list[0].LastScrapeStatus)
 	_ = c
+}
+
+func TestSaveScrapedJobs(t *testing.T) {
+	_, srv := setup(t)
+	store := srv.Store()
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u"})
+
+	jobsJSON := fmt.Sprintf(`[
+		{"company_id":%d,"title":"SRE","location":"Remote","url":"https://j/1","match_reason":"worldwide"},
+		{"company_id":%d,"title":"DevOps","location":"Remote APAC","url":"https://j/2","match_reason":"APAC includes UTC+7"}
+	]`, c.ID, c.ID)
+
+	out, err := srv.CallTool(context.Background(), "save_scraped_jobs", map[string]any{"jobs": jobsJSON})
+	require.NoError(t, err)
+	assert.Contains(t, out, "2")
+
+	jobs, _ := store.ListScrapedJobs("new")
+	assert.Len(t, jobs, 2)
 }
 
 func TestGetScrapePreferences(t *testing.T) {

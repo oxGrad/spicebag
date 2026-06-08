@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -124,5 +125,56 @@ func jitter() time.Duration {
 	return time.Duration(300+rand.Intn(700)) * time.Millisecond
 }
 
-// Placeholder stub replaced by Task 11.
-func (s *Server) registerSaveScrapedJobs() {}
+func (s *Server) registerSaveScrapedJobs() {
+	s.mcpSrv.AddTool(
+		mcplib.NewTool(
+			"save_scraped_jobs",
+			mcplib.WithDescription("Save matched jobs (those that pass the user's timezone/region/role rule). Jobs whose URL already exists are ignored. Returns counts of new vs already-seen."),
+			mcplib.WithString("jobs", mcplib.Required(),
+				mcplib.Description(`JSON array of {"company_id": <id>, "title": "...", "location": "...", "url": "...", "match_reason": "..."}`)),
+		),
+		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+			jobsJSON := req.GetString("jobs", "")
+			var entries []struct {
+				CompanyID   int64  `json:"company_id"`
+				Title       string `json:"title"`
+				Location    string `json:"location"`
+				URL         string `json:"url"`
+				MatchReason string `json:"match_reason"`
+			}
+			if err := json.Unmarshal([]byte(jobsJSON), &entries); err != nil {
+				return mcplib.NewToolResultError(fmt.Sprintf("invalid jobs JSON: %v", err)), nil
+			}
+			var jobs []db.ScrapedJob
+			for _, e := range entries {
+				jobs = append(jobs, db.ScrapedJob{
+					CompanyID:   e.CompanyID,
+					CompanyName: s.companyNameByID(e.CompanyID),
+					Title:       e.Title,
+					Location:    e.Location,
+					URL:         e.URL,
+					MatchReason: e.MatchReason,
+				})
+			}
+			added, err := s.store.SaveScrapedJobs(jobs)
+			if err != nil {
+				return mcplib.NewToolResultError(err.Error()), nil
+			}
+			b, _ := json.Marshal(map[string]any{"new": added, "already_seen": len(jobs) - added})
+			return mcplib.NewToolResultText(string(b)), nil
+		},
+	)
+}
+
+func (s *Server) companyNameByID(id int64) string {
+	companies, err := s.store.ListScrapeCompanies()
+	if err != nil {
+		return ""
+	}
+	for _, c := range companies {
+		if c.ID == id {
+			return c.Name
+		}
+	}
+	return ""
+}
