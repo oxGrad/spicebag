@@ -102,6 +102,9 @@ export const api = {
     roles: () => get("/scrape/roles"),
     addRole: (keyword) => post("/scrape/roles", { keyword }),
     deleteRole: (id) => del(`/scrape/roles/${id}`),
+    skills: () => get("/scrape/skills"),
+    addSkill: (keyword) => post("/scrape/skills", { keyword }),
+    deleteSkill: (id) => del(`/scrape/skills/${id}`),
     prefs: () => get("/scrape/prefs"),
     updatePrefs: (homeTimezone, locationNotes) =>
       post("/scrape/prefs", { home_timezone: homeTimezone, location_notes: locationNotes }),

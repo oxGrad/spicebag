@@ -132,6 +132,22 @@
     </section>
 
     <section class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Target Skills</h2>
+      <p class="text-xs text-gray-500 mb-3">Jobs mentioning these skills in their title qualify even if the role title doesn't match. Multiple hits raise the skill score.</p>
+      <form @submit.prevent="addSkill" class="flex gap-2 mb-3">
+        <input v-model="newSkill" type="text" placeholder="e.g. Go, Rust, Kubernetes"
+          class="flex-1 border rounded px-2 py-1.5 text-sm" />
+        <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Add</button>
+      </form>
+      <div class="flex flex-wrap gap-2">
+        <span v-for="sk in skills" :key="sk.id" class="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-1 text-xs text-indigo-700">
+          {{ sk.keyword }}
+          <button @click="deleteSkill(sk.id)" class="text-indigo-400 hover:text-red-600">×</button>
+        </span>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-lg shadow p-5 mb-6">
       <h2 class="font-semibold mb-3">Location Preferences</h2>
       <label class="block text-xs text-gray-500 mb-1">Home timezone</label>
       <input v-model="homeTimezone" type="text" placeholder="UTC+7" class="border rounded px-2 py-1.5 text-sm w-32 mb-3" />
@@ -218,8 +234,10 @@ const confirmDeleteId = ref(null)
 // Scraping state
 const companies     = ref([])
 const roles         = ref([])
+const skills        = ref([])
 const newCompanyURL = ref('')
 const newRole       = ref('')
+const newSkill      = ref('')
 const companyError  = ref('')
 const homeTimezone  = ref('')
 const locationNotes = ref('')
@@ -228,6 +246,7 @@ const prefsSaved    = ref(false)
 async function loadScrape() {
   companies.value = await api.scrape.companies()
   roles.value = await api.scrape.roles()
+  skills.value = await api.scrape.skills()
   const p = await api.scrape.prefs()
   homeTimezone.value = p.home_timezone
   locationNotes.value = p.location_notes
@@ -248,6 +267,11 @@ async function addRole() {
   await api.scrape.addRole(newRole.value.trim()); newRole.value = ''; await loadScrape()
 }
 async function deleteRole(id) { await api.scrape.deleteRole(id); await loadScrape() }
+async function addSkill() {
+  if (!newSkill.value.trim()) return
+  await api.scrape.addSkill(newSkill.value.trim()); newSkill.value = ''; await loadScrape()
+}
+async function deleteSkill(id) { await api.scrape.deleteSkill(id); await loadScrape() }
 async function savePrefs() {
   await api.scrape.updatePrefs(homeTimezone.value, locationNotes.value)
   prefsSaved.value = true

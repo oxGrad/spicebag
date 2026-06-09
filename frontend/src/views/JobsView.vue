@@ -38,6 +38,13 @@
           <td class="px-4 py-3 font-medium">{{ job.company_name }}</td>
           <td class="px-4 py-3">
             <a :href="job.url" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ job.title }}</a>
+            <div v-if="job.matched_skills" class="flex flex-wrap gap-1 mt-1">
+              <span
+                v-for="sk in job.matched_skills.split(',')"
+                :key="sk"
+                class="inline-block bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full"
+              >{{ sk }}</span>
+            </div>
           </td>
           <td class="px-4 py-3 text-gray-500">{{ job.location || '—' }}</td>
           <td class="px-4 py-3 text-gray-500 text-xs">{{ job.match_reason || '—' }}</td>
