@@ -40,7 +40,7 @@
             <a :href="job.url" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ job.title }}</a>
             <div v-if="job.matched_skills" class="flex flex-wrap gap-1 mt-1">
               <span
-                v-for="sk in job.matched_skills.split(',')"
+                v-for="sk in job.matched_skills.split(',').map(s => s.trim())"
                 :key="sk"
                 class="inline-block bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full"
               >{{ sk }}</span>
