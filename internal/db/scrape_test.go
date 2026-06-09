@@ -211,3 +211,70 @@ func TestDeleteScrapeCompanyCascadesJobs(t *testing.T) {
 	require.NoError(t, store.DB().QueryRow(`SELECT COUNT(*) FROM scraped_jobs WHERE company_id=?`, c.ID).Scan(&n))
 	assert.Equal(t, 0, n, "scraped_jobs for the company must be deleted")
 }
+
+func TestScrapeBoardsSeededAndToggle(t *testing.T) {
+	store := openTestStore(t)
+
+	boards, err := store.ListScrapeBoards()
+	require.NoError(t, err)
+	require.Len(t, boards, 4) // seeded by migration
+
+	var remotiveID int64
+	for _, b := range boards {
+		if b.Name == "remotive" {
+			remotiveID = b.ID
+			assert.True(t, b.Enabled)
+			assert.Equal(t, "Remotive", b.Label)
+			assert.Equal(t, "never", b.LastScrapeStatus)
+		}
+	}
+	require.NotZero(t, remotiveID)
+
+	require.NoError(t, store.ToggleScrapeBoard(remotiveID, false))
+	boards, _ = store.ListScrapeBoards()
+	for _, b := range boards {
+		if b.ID == remotiveID {
+			assert.False(t, b.Enabled)
+		}
+	}
+
+	require.NoError(t, store.UpdateScrapeBoardStatus(remotiveID, "2026-06-09 10:00:00", "ok", "", 42))
+	boards, _ = store.ListScrapeBoards()
+	for _, b := range boards {
+		if b.ID == remotiveID {
+			assert.Equal(t, "ok", b.LastScrapeStatus)
+			assert.Equal(t, 42, b.LastJobCount)
+		}
+	}
+}
+
+func TestBoardJobsSaveAndList(t *testing.T) {
+	store := openTestStore(t)
+
+	jobs := []db.BoardJob{
+		{SourceBoard: "remotive", CompanyName: "Acme", Title: "SRE", Location: "Worldwide", URL: "https://remotive.com/1", MatchReason: "worldwide remote", MatchedSkills: "Go", SkillScore: 1},
+		{SourceBoard: "remoteok", CompanyName: "Beta", Title: "DevOps Engineer", Location: "Remote", URL: "https://remoteok.com/2", MatchReason: "worldwide remote"},
+	}
+
+	added, err := store.SaveBoardJobs(jobs)
+	require.NoError(t, err)
+	assert.Equal(t, 2, added)
+
+	// duplicate URL is ignored
+	added2, err := store.SaveBoardJobs(jobs[:1])
+	require.NoError(t, err)
+	assert.Equal(t, 0, added2)
+
+	list, err := store.ListBoardJobs("new")
+	require.NoError(t, err)
+	require.Len(t, list, 2)
+	// ordered by skill_score DESC
+	assert.Equal(t, "SRE", list[0].Title)
+	assert.Equal(t, "Go", list[0].MatchedSkills)
+
+	require.NoError(t, store.SetBoardJobStatus(list[1].ID, "dismissed"))
+	newList, _ := store.ListBoardJobs("new")
+	assert.Len(t, newList, 1)
+	dismissed, _ := store.ListBoardJobs("dismissed")
+	assert.Len(t, dismissed, 1)
+}

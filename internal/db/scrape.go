@@ -234,6 +234,118 @@ func (s *Store) SetScrapedJobStatus(id int64, status string) error {
 	return err
 }
 
+type ScrapeBoard struct {
+	ID               int64  `json:"id"`
+	Name             string `json:"name"`
+	Label            string `json:"label"`
+	Enabled          bool   `json:"enabled"`
+	LastScrapedAt    string `json:"last_scraped_at"`
+	LastScrapeStatus string `json:"last_scrape_status"`
+	LastScrapeError  string `json:"last_scrape_error"`
+	LastJobCount     int    `json:"last_job_count"`
+}
+
+func (s *Store) ListScrapeBoards() ([]ScrapeBoard, error) {
+	rows, err := s.db.Query(
+		`SELECT id, name, label, enabled, last_scraped_at, last_scrape_status, last_scrape_error, last_job_count
+		 FROM scrape_boards ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ScrapeBoard
+	for rows.Next() {
+		var b ScrapeBoard
+		var enabled int
+		if err := rows.Scan(&b.ID, &b.Name, &b.Label, &enabled,
+			&b.LastScrapedAt, &b.LastScrapeStatus, &b.LastScrapeError, &b.LastJobCount); err != nil {
+			return nil, err
+		}
+		b.Enabled = enabled == 1
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) UpdateScrapeBoardStatus(id int64, scrapedAt, status, errMsg string, jobCount int) error {
+	_, err := s.db.Exec(
+		`UPDATE scrape_boards SET last_scraped_at=?, last_scrape_status=?, last_scrape_error=?, last_job_count=? WHERE id=?`,
+		scrapedAt, status, errMsg, jobCount, id,
+	)
+	return err
+}
+
+func (s *Store) ToggleScrapeBoard(id int64, enabled bool) error {
+	v := 0
+	if enabled {
+		v = 1
+	}
+	_, err := s.db.Exec(`UPDATE scrape_boards SET enabled=? WHERE id=?`, v, id)
+	return err
+}
+
+type BoardJob struct {
+	ID                   int64         `json:"id"`
+	SourceBoard          string        `json:"source_board"`
+	CompanyName          string        `json:"company_name"`
+	Title                string        `json:"title"`
+	Location             string        `json:"location"`
+	URL                  string        `json:"url"`
+	MatchReason          string        `json:"match_reason"`
+	MatchedSkills        string        `json:"matched_skills"`
+	SkillScore           int           `json:"skill_score"`
+	Status               string        `json:"status"`
+	ScrapedAt            string        `json:"scraped_at"`
+	AppliedApplicationID sql.NullInt64 `json:"applied_application_id"`
+}
+
+func (s *Store) SaveBoardJobs(jobs []BoardJob) (int, error) {
+	added := 0
+	for _, j := range jobs {
+		res, err := s.db.Exec(
+			`INSERT OR IGNORE INTO board_jobs
+			   (source_board, company_name, title, location, url, match_reason, matched_skills, skill_score)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			j.SourceBoard, j.CompanyName, j.Title, j.Location, j.URL, j.MatchReason, j.MatchedSkills, j.SkillScore,
+		)
+		if err != nil {
+			return added, err
+		}
+		if n, _ := res.RowsAffected(); n > 0 {
+			added++
+		}
+	}
+	return added, nil
+}
+
+func (s *Store) ListBoardJobs(status string) ([]BoardJob, error) {
+	rows, err := s.db.Query(
+		`SELECT id, source_board, company_name, title, location, url, match_reason,
+		        matched_skills, skill_score, status, scraped_at, applied_application_id
+		 FROM board_jobs WHERE status=?
+		 ORDER BY skill_score DESC, scraped_at DESC`, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []BoardJob
+	for rows.Next() {
+		var j BoardJob
+		if err := rows.Scan(&j.ID, &j.SourceBoard, &j.CompanyName, &j.Title, &j.Location,
+			&j.URL, &j.MatchReason, &j.MatchedSkills, &j.SkillScore,
+			&j.Status, &j.ScrapedAt, &j.AppliedApplicationID); err != nil {
+			return nil, err
+		}
+		out = append(out, j)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) SetBoardJobStatus(id int64, status string) error {
+	_, err := s.db.Exec(`UPDATE board_jobs SET status=? WHERE id=?`, status, id)
+	return err
+}
+
 // LinkApplicationToScrapedJob finds a scraped job whose normalized URL matches
 // the application's normalized job URL, links them, and marks it applied.
 // Returns true if a match was found and linked.
