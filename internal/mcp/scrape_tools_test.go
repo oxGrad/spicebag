@@ -82,7 +82,7 @@ func TestCreateApplicationLinksScrapedJob(t *testing.T) {
 }
 
 func TestGetScrapePreferences(t *testing.T) {
-	_, srv := setup(t) // helper in internal/mcp/mcp_test.go: returns (root, *Server)
+	_, srv := setup(t)
 	store := srv.Store()
 
 	_, err := store.AddScrapeCompany(db.ScrapeCompany{
@@ -90,6 +90,8 @@ func TestGetScrapePreferences(t *testing.T) {
 	})
 	require.NoError(t, err)
 	_, err = store.AddScrapeRole("SRE")
+	require.NoError(t, err)
+	_, err = store.AddScrapeSkill("Go")
 	require.NoError(t, err)
 	require.NoError(t, store.UpdateScrapePrefs(db.ScrapePrefs{HomeTimezone: "UTC+7", LocationNotes: "APAC"}))
 
@@ -99,12 +101,35 @@ func TestGetScrapePreferences(t *testing.T) {
 	var got struct {
 		Companies []db.ScrapeCompany `json:"companies"`
 		Roles     []db.ScrapeRole    `json:"roles"`
+		Skills    []db.ScrapeSkill   `json:"skills"`
 		HomeTZ    string             `json:"home_timezone"`
 		Notes     string             `json:"location_notes"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &got))
 	assert.Len(t, got.Companies, 1)
 	assert.Len(t, got.Roles, 1)
+	assert.Len(t, got.Skills, 1)
+	assert.Equal(t, "Go", got.Skills[0].Keyword)
 	assert.Equal(t, "UTC+7", got.HomeTZ)
 	assert.Equal(t, "APAC", got.Notes)
+}
+
+func TestSaveScrapedJobsWithSkillScore(t *testing.T) {
+	_, srv := setup(t)
+	store := srv.Store()
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u"})
+
+	jobsJSON := fmt.Sprintf(`[
+		{"company_id":%d,"title":"Go SRE","location":"Remote","url":"https://j/10",
+		 "match_reason":"worldwide remote · Go","matched_skills":"Go","skill_score":1}
+	]`, c.ID)
+
+	out, err := srv.CallTool(context.Background(), "save_scraped_jobs", map[string]any{"jobs": jobsJSON})
+	require.NoError(t, err)
+	assert.Contains(t, out, `"new":1`)
+
+	jobs, _ := store.ListScrapedJobs("new")
+	require.Len(t, jobs, 1)
+	assert.Equal(t, "Go", jobs[0].MatchedSkills)
+	assert.Equal(t, 1, jobs[0].SkillScore)
 }

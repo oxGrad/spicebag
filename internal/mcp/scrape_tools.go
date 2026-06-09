@@ -28,6 +28,10 @@ func (s *Server) registerScrapeTools() {
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}
+			skills, err := s.store.ListScrapeSkills()
+			if err != nil {
+				return mcplib.NewToolResultError(err.Error()), nil
+			}
 			prefs, err := s.store.GetScrapePrefs()
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
@@ -38,9 +42,13 @@ func (s *Server) registerScrapeTools() {
 			if roles == nil {
 				roles = []db.ScrapeRole{}
 			}
+			if skills == nil {
+				skills = []db.ScrapeSkill{}
+			}
 			payload := map[string]any{
 				"companies":      companies,
 				"roles":          roles,
+				"skills":         skills,
 				"home_timezone":  prefs.HomeTimezone,
 				"location_notes": prefs.LocationNotes,
 			}
@@ -137,16 +145,18 @@ func (s *Server) registerSaveScrapedJobs() {
 			"save_scraped_jobs",
 			mcplib.WithDescription("Save matched jobs (those that pass the user's timezone/region/role rule). Jobs whose URL already exists are ignored. Returns counts of new vs already-seen."),
 			mcplib.WithString("jobs", mcplib.Required(),
-				mcplib.Description(`JSON array of {"company_id": <id>, "title": "...", "location": "...", "url": "...", "match_reason": "..."}`)),
+				mcplib.Description(`JSON array of {"company_id": <id>, "title": "...", "location": "...", "url": "...", "match_reason": "...", "matched_skills": "...", "skill_score": <int>}`)),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			jobsJSON := req.GetString("jobs", "")
 			var entries []struct {
-				CompanyID   int64  `json:"company_id"`
-				Title       string `json:"title"`
-				Location    string `json:"location"`
-				URL         string `json:"url"`
-				MatchReason string `json:"match_reason"`
+				CompanyID     int64  `json:"company_id"`
+				Title         string `json:"title"`
+				Location      string `json:"location"`
+				URL           string `json:"url"`
+				MatchReason   string `json:"match_reason"`
+				MatchedSkills string `json:"matched_skills"`
+				SkillScore    int    `json:"skill_score"`
 			}
 			if err := json.Unmarshal([]byte(jobsJSON), &entries); err != nil {
 				return mcplib.NewToolResultError(fmt.Sprintf("invalid jobs JSON: %v", err)), nil
@@ -155,12 +165,14 @@ func (s *Server) registerSaveScrapedJobs() {
 			var jobs []db.ScrapedJob
 			for _, e := range entries {
 				jobs = append(jobs, db.ScrapedJob{
-					CompanyID:   e.CompanyID,
-					CompanyName: names[e.CompanyID],
-					Title:       e.Title,
-					Location:    e.Location,
-					URL:         e.URL,
-					MatchReason: e.MatchReason,
+					CompanyID:     e.CompanyID,
+					CompanyName:   names[e.CompanyID],
+					Title:         e.Title,
+					Location:      e.Location,
+					URL:           e.URL,
+					MatchReason:   e.MatchReason,
+					MatchedSkills: e.MatchedSkills,
+					SkillScore:    e.SkillScore,
 				})
 			}
 			added, err := s.store.SaveScrapedJobs(jobs)
