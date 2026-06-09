@@ -95,6 +95,22 @@ export const api = {
     list: () => get("/memories"),
     get: (name) => get(`/memories/${encodeURIComponent(name)}`),
   },
+  scrape: {
+    companies: () => get("/scrape/companies"),
+    addCompany: (careersUrl, name) => post("/scrape/companies", { careers_url: careersUrl, name: name ?? "" }),
+    deleteCompany: (id) => del(`/scrape/companies/${id}`),
+    roles: () => get("/scrape/roles"),
+    addRole: (keyword) => post("/scrape/roles", { keyword }),
+    deleteRole: (id) => del(`/scrape/roles/${id}`),
+    skills: () => get("/scrape/skills"),
+    addSkill: (keyword) => post("/scrape/skills", { keyword }),
+    deleteSkill: (id) => del(`/scrape/skills/${id}`),
+    prefs: () => get("/scrape/prefs"),
+    updatePrefs: (homeTimezone, locationNotes) =>
+      post("/scrape/prefs", { home_timezone: homeTimezone, location_notes: locationNotes }),
+    jobs: (status = "new") => get(`/scrape/jobs?status=${status}`),
+    setJobStatus: (id, status) => post(`/scrape/jobs/${id}/status`, { status }),
+  },
   export: (filePath, theme, method = "auto") =>
     fetch("/api/export", {
       method: "POST",

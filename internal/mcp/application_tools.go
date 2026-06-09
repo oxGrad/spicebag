@@ -82,6 +82,10 @@ func (s *Server) registerApplicationTools() {
 				return mcplib.NewToolResultError(fmt.Sprintf("setting initial status: %v", err)), nil
 			}
 
+			if jobURL != "" {
+				s.store.LinkApplicationToScrapedJob(id, jobURL) //nolint:errcheck
+			}
+
 			return mcplib.NewToolResultText(fmt.Sprintf("Created application at %s", folderPath)), nil
 		},
 	)

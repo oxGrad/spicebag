@@ -14,6 +14,10 @@
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
       >Applications</RouterLink>
+      <RouterLink to="/jobs"
+        active-class="bg-white/10 text-white font-medium"
+        class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
+      >Jobs</RouterLink>
       <RouterLink to="/cv"
         active-class="bg-white/10 text-white font-medium"
         class="px-2.5 py-2 rounded-md text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"

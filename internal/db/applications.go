@@ -110,6 +110,7 @@ func (s *Store) GetStatusHistory(applicationID int64) ([]StatusHistoryEntry, err
 type ApplicationWithStatus struct {
 	Application
 	CurrentStatus string
+	FromScrape    bool
 }
 
 // ListApplicationsWithStatus returns all applications with their latest status.
@@ -121,7 +122,8 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 		          WHERE application_id = a.id
 		          ORDER BY changed_at DESC, id DESC LIMIT 1),
 		         'unknown'
-		       ) AS current_status
+		       ) AS current_status,
+		       EXISTS(SELECT 1 FROM scraped_jobs sj WHERE sj.applied_application_id = a.id) AS from_scrape
 		FROM applications a
 		ORDER BY a.id DESC
 	`)
@@ -135,7 +137,7 @@ func (s *Store) ListApplicationsWithStatus() ([]ApplicationWithStatus, error) {
 		var a ApplicationWithStatus
 		if err := rows.Scan(
 			&a.ID, &a.Company, &a.Role, &a.AppliedDate, &a.BaseCVUsed, &a.Notes, &a.FolderPath, &a.Source, &a.JobURL, &a.JobSummary, &a.MatchScore, &a.TailoringNotes,
-			&a.CurrentStatus,
+			&a.CurrentStatus, &a.FromScrape,
 		); err != nil {
 			return nil, err
 		}

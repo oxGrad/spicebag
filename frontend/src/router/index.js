@@ -11,6 +11,7 @@ const routes = [
   { path: "/sources",  redirect: "/settings?tab=sources" },
   { path: "/stats",    component: () => import("../views/StatsView.vue") },
   { path: "/memory",   component: () => import("../views/MemoryView.vue") },
+  { path: "/jobs", component: () => import("../views/JobsView.vue") },
 ];
 
 export default createRouter({ history: createWebHistory(), routes });
