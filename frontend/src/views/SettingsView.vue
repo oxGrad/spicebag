@@ -93,6 +93,27 @@
   <!-- Job Scraping tab -->
   <div v-if="activeTab === 'scraping'" class="max-w-2xl">
     <section class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Job Boards</h2>
+      <p class="text-xs text-gray-500 mb-3">Enable boards to fetch jobs from. Run <code>/scrape-jobs</code> in Claude Code to pull listings.</p>
+      <ul class="divide-y divide-gray-100">
+        <li v-for="b in boards" :key="b.id" class="flex items-center justify-between py-3 text-sm">
+          <div>
+            <span class="font-medium">{{ b.label }}</span>
+            <div class="text-xs mt-0.5" :class="b.last_scrape_status === 'error' ? 'text-red-600' : 'text-gray-400'">
+              <template v-if="b.last_scrape_status === 'ok'">✅ {{ b.last_job_count }} jobs · {{ (b.last_scraped_at||'').slice(0,16) }}</template>
+              <template v-else-if="b.last_scrape_status === 'error'">🔴 {{ b.last_scrape_error }}</template>
+              <template v-else>Not scraped yet</template>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" :checked="b.enabled" @change="toggleBoard(b)" class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+          </label>
+        </li>
+      </ul>
+    </section>
+
+    <section class="bg-white rounded-lg shadow p-5 mb-6">
       <h2 class="font-semibold mb-3">Scrape Companies</h2>
       <form @submit.prevent="addCompany" class="flex gap-2 mb-3">
         <input v-model="newCompanyURL" type="text" placeholder="Paste a careers URL (Greenhouse, Lever, Ashby, …)"
@@ -232,6 +253,7 @@ const newSourceName  = ref('')
 const confirmDeleteId = ref(null)
 
 // Scraping state
+const boards        = ref([])
 const companies     = ref([])
 const roles         = ref([])
 const skills        = ref([])
@@ -244,12 +266,17 @@ const locationNotes = ref('')
 const prefsSaved    = ref(false)
 
 async function loadScrape() {
+  boards.value = await api.boards.list()
   companies.value = await api.scrape.companies()
   roles.value = await api.scrape.roles()
   skills.value = await api.scrape.skills()
   const p = await api.scrape.prefs()
   homeTimezone.value = p.home_timezone
   locationNotes.value = p.location_notes
+}
+async function toggleBoard(b) {
+  await api.boards.toggle(b.id, !b.enabled)
+  boards.value = await api.boards.list()
 }
 async function addCompany() {
   companyError.value = ''

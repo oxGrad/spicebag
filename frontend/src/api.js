@@ -111,6 +111,14 @@ export const api = {
     jobs: (status = "new") => get(`/scrape/jobs?status=${status}`),
     setJobStatus: (id, status) => post(`/scrape/jobs/${id}/status`, { status }),
   },
+  boards: {
+    list: () => get("/scrape/boards"),
+    toggle: (id, enabled) => post(`/scrape/boards/${id}/toggle`, { enabled: enabled ? "1" : "0" }),
+  },
+  boardJobs: {
+    list: (status = "new") => get(`/board-jobs?status=${status}`),
+    setStatus: (id, status) => post(`/board-jobs/${id}/status`, { status }),
+  },
   export: (filePath, theme, method = "auto") =>
     fetch("/api/export", {
       method: "POST",

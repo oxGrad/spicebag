@@ -12,6 +12,7 @@ const routes = [
   { path: "/stats",    component: () => import("../views/StatsView.vue") },
   { path: "/memory",   component: () => import("../views/MemoryView.vue") },
   { path: "/jobs", component: () => import("../views/JobsView.vue") },
+  { path: "/board-jobs", component: () => import("../views/BoardJobsView.vue") },
 ];
 
 export default createRouter({ history: createWebHistory(), routes });
