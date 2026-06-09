@@ -17,7 +17,7 @@ func (s *Server) registerScrapeTools() {
 	s.mcpSrv.AddTool(
 		mcplib.NewTool(
 			"get_scrape_preferences",
-			mcplib.WithDescription("Return the user's saved job-scraping companies, target roles, target skills, and location preferences (home timezone + notes) used to judge job fit."),
+			mcplib.WithDescription("Return the user's saved job-scraping preferences: companies, target roles, target skills, enabled job boards, and location preferences (home timezone + notes) used to judge job fit."),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			companies, err := s.store.ListScrapeCompanies()
@@ -36,6 +36,10 @@ func (s *Server) registerScrapeTools() {
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}
+			boards, err := s.store.ListScrapeBoards()
+			if err != nil {
+				return mcplib.NewToolResultError(err.Error()), nil
+			}
 			if companies == nil {
 				companies = []db.ScrapeCompany{}
 			}
@@ -45,10 +49,20 @@ func (s *Server) registerScrapeTools() {
 			if skills == nil {
 				skills = []db.ScrapeSkill{}
 			}
+			var enabledBoards []string
+			for _, b := range boards {
+				if b.Enabled {
+					enabledBoards = append(enabledBoards, b.Label)
+				}
+			}
+			if enabledBoards == nil {
+				enabledBoards = []string{}
+			}
 			payload := map[string]any{
 				"companies":      companies,
 				"roles":          roles,
 				"skills":         skills,
+				"boards":         enabledBoards,
 				"home_timezone":  prefs.HomeTimezone,
 				"location_notes": prefs.LocationNotes,
 			}
@@ -59,6 +73,8 @@ func (s *Server) registerScrapeTools() {
 
 	s.registerFetchATSJobs()
 	s.registerSaveScrapedJobs()
+	s.registerFetchBoardJobs()
+	s.registerSaveBoardJobs()
 }
 
 func (s *Server) registerFetchATSJobs() {
@@ -176,6 +192,127 @@ func (s *Server) registerSaveScrapedJobs() {
 				})
 			}
 			added, err := s.store.SaveScrapedJobs(jobs)
+			if err != nil {
+				return mcplib.NewToolResultError(err.Error()), nil
+			}
+			b, _ := json.Marshal(map[string]any{"new": added, "already_seen": len(jobs) - added})
+			return mcplib.NewToolResultText(string(b)), nil
+		},
+	)
+}
+
+func (s *Server) registerFetchBoardJobs() {
+	s.mcpSrv.AddTool(
+		mcplib.NewTool(
+			"fetch_board_jobs",
+			mcplib.WithDescription("Fetch current job listings from all enabled job boards (Remotive, Remote OK, We Work Remotely, Jobicy). Returns a compact list of {board, company_name, title, location, url} plus per-board errors. Records each board's scrape status. Apply timezone/region/role/skill judgment to the returned list, then call save_board_jobs with the matches."),
+		),
+		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+			boards, err := s.store.ListScrapeBoards()
+			if err != nil {
+				return mcplib.NewToolResultError(err.Error()), nil
+			}
+			reg := scrape.BoardRegistry()
+
+			type outJob struct {
+				Board       string `json:"board"`
+				CompanyName string `json:"company_name"`
+				Title       string `json:"title"`
+				Location    string `json:"location"`
+				URL         string `json:"url"`
+			}
+			type outErr struct {
+				Board string `json:"board"`
+				Error string `json:"error"`
+			}
+			var jobs []outJob
+			var errs []outErr
+
+			first := true
+			for _, b := range boards {
+				if !b.Enabled {
+					continue
+				}
+				if !first {
+					time.Sleep(jitter())
+				}
+				first = false
+				now := time.Now().Format("2006-01-02 15:04:05")
+				adapter, ok := reg[b.Name]
+				if !ok {
+					msg := "Unsupported board: " + b.Name
+					s.store.UpdateScrapeBoardStatus(b.ID, now, "error", msg, 0) //nolint:errcheck
+					errs = append(errs, outErr{Board: b.Label, Error: msg})
+					continue
+				}
+				fetched, ferr := adapter.FetchJobs(ctx)
+				if ferr != nil {
+					msg := scrape.ClassifyError(b.Name, ferr)
+					s.store.UpdateScrapeBoardStatus(b.ID, now, "error", msg, 0) //nolint:errcheck
+					errs = append(errs, outErr{Board: b.Label, Error: msg})
+					continue
+				}
+				kept := 0
+				for _, j := range fetched {
+					if !scrape.HasRemoteSignal(j.Location) {
+						continue
+					}
+					jobs = append(jobs, outJob{
+						Board: b.Name, CompanyName: j.CompanyName,
+						Title: j.Title, Location: j.Location, URL: j.URL,
+					})
+					kept++
+				}
+				s.store.UpdateScrapeBoardStatus(b.ID, now, "ok", "", kept) //nolint:errcheck
+			}
+
+			if jobs == nil {
+				jobs = []outJob{}
+			}
+			payload := map[string]any{"jobs": jobs, "errors": errs}
+			b, _ := json.Marshal(payload)
+			return mcplib.NewToolResultText(string(b)), nil
+		},
+	)
+}
+
+func (s *Server) registerSaveBoardJobs() {
+	s.mcpSrv.AddTool(
+		mcplib.NewTool(
+			"save_board_jobs",
+			mcplib.WithDescription("Save matched board jobs (those that pass the user's timezone/region/role/skill rules). Jobs whose URL already exists are ignored. Returns counts of new vs already-seen."),
+			mcplib.WithString("jobs", mcplib.Required(),
+				mcplib.Description(`JSON array of {"source_board": "remotive", "company_name": "...", "title": "...", "location": "...", "url": "...", "match_reason": "...", "matched_skills": "...", "skill_score": <int>}`)),
+		),
+		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+			jobsJSON := req.GetString("jobs", "")
+			var entries []struct {
+				SourceBoard   string `json:"source_board"`
+				CompanyName   string `json:"company_name"`
+				Title         string `json:"title"`
+				Location      string `json:"location"`
+				URL           string `json:"url"`
+				MatchReason   string `json:"match_reason"`
+				MatchedSkills string `json:"matched_skills"`
+				SkillScore    int    `json:"skill_score"`
+			}
+			if err := json.Unmarshal([]byte(jobsJSON), &entries); err != nil {
+				return mcplib.NewToolResultError(fmt.Sprintf("invalid jobs JSON: %v", err)), nil
+			}
+			var jobs []db.BoardJob
+			for _, e := range entries {
+				jobs = append(jobs, db.BoardJob{
+					SourceBoard:   e.SourceBoard,
+					CompanyName:   e.CompanyName,
+					Title:         e.Title,
+					Location:      e.Location,
+					URL:           e.URL,
+					MatchReason:   e.MatchReason,
+					MatchedSkills: e.MatchedSkills,
+					SkillScore:    e.SkillScore,
+				})
+			}
+			added, err := s.store.SaveBoardJobs(jobs)
 			if err != nil {
 				return mcplib.NewToolResultError(err.Error()), nil
 			}

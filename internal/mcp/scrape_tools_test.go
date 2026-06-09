@@ -114,6 +114,38 @@ func TestGetScrapePreferences(t *testing.T) {
 	assert.Equal(t, "APAC", got.Notes)
 }
 
+func TestGetScrapePreferencesIncludesBoards(t *testing.T) {
+	_, srv := setup(t)
+
+	out, err := srv.CallTool(context.Background(), "get_scrape_preferences", map[string]any{})
+	require.NoError(t, err)
+
+	var got struct {
+		Boards []string `json:"boards"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &got))
+	// migration seeds 4 boards all enabled
+	assert.Len(t, got.Boards, 4)
+	assert.Contains(t, got.Boards, "Remotive")
+}
+
+func TestSaveBoardJobs(t *testing.T) {
+	_, srv := setup(t)
+	store := srv.Store()
+
+	jobsJSON := `[
+		{"source_board":"remotive","company_name":"Acme","title":"SRE","location":"Worldwide","url":"https://remotive.com/1","match_reason":"worldwide remote","matched_skills":"Go","skill_score":1},
+		{"source_board":"remoteok","company_name":"Beta","title":"DevOps","location":"Remote","url":"https://remoteok.com/2","match_reason":"worldwide remote"}
+	]`
+
+	out, err := srv.CallTool(context.Background(), "save_board_jobs", map[string]any{"jobs": jobsJSON})
+	require.NoError(t, err)
+	assert.Contains(t, out, `"new":2`)
+
+	jobs, _ := store.ListBoardJobs("new")
+	assert.Len(t, jobs, 2)
+}
+
 func TestSaveScrapedJobsWithSkillScore(t *testing.T) {
 	_, srv := setup(t)
 	store := srv.Store()
