@@ -1,0 +1,19 @@
+{
+  "status": "success",
+  "jobs": [
+    {
+      "id": 4001,
+      "url": "https://jobicy.com/jobs/4001-platform-engineer",
+      "jobTitle": "Platform Engineer",
+      "companyName": "Acme Corp",
+      "jobGeo": "Worldwide"
+    },
+    {
+      "id": 4002,
+      "url": "https://jobicy.com/jobs/4002-sales-manager",
+      "jobTitle": "Sales Manager",
+      "companyName": "Beta Corp",
+      "jobGeo": "Remote"
+    }
+  ]
+}
