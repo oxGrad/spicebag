@@ -1,12 +1,15 @@
 package dashboard_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestScrapeCompanyAddDetectsPlatform(t *testing.T) {
@@ -57,4 +60,34 @@ func TestScrapeRoleAddAndPrefs(t *testing.T) {
 	gw := httptest.NewRecorder()
 	srv.ServeHTTP(gw, getReq)
 	assert.Contains(t, gw.Body.String(), "UTC+7")
+}
+
+func TestScrapeSkillAddListDelete(t *testing.T) {
+	srv := newTestServer(t)
+
+	// Add
+	req := httptest.NewRequest(http.MethodPost, "/api/scrape/skills",
+		strings.NewReader("keyword=Go"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Contains(t, w.Body.String(), "Go")
+
+	// List
+	req2 := httptest.NewRequest(http.MethodGet, "/api/scrape/skills", nil)
+	w2 := httptest.NewRecorder()
+	srv.ServeHTTP(w2, req2)
+	assert.Equal(t, http.StatusOK, w2.Code)
+	assert.Contains(t, w2.Body.String(), "Go")
+
+	// Extract ID and delete
+	var skills []struct{ ID int64 `json:"id"` }
+	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &skills))
+	require.Len(t, skills, 1)
+
+	req3 := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/scrape/skills/%d", skills[0].ID), nil)
+	w3 := httptest.NewRecorder()
+	srv.ServeHTTP(w3, req3)
+	assert.Equal(t, http.StatusNoContent, w3.Code)
 }

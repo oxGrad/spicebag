@@ -154,3 +154,43 @@ func (s *Server) handleAPIScrapeJobStatus(w http.ResponseWriter, r *http.Request
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (s *Server) handleAPIScrapeSkillsList(w http.ResponseWriter, r *http.Request) {
+	sks, err := s.store.ListScrapeSkills()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if sks == nil {
+		sks = []db.ScrapeSkill{}
+	}
+	writeJSON(w, sks)
+}
+
+func (s *Server) handleAPIScrapeSkillCreate(w http.ResponseWriter, r *http.Request) {
+	keyword := r.FormValue("keyword")
+	if keyword == "" {
+		http.Error(w, "keyword is required", http.StatusBadRequest)
+		return
+	}
+	sk, err := s.store.AddScrapeSkill(keyword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	writeJSON(w, sk)
+}
+
+func (s *Server) handleAPIScrapeSkillDelete(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	if err := s.store.DeleteScrapeSkill(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
