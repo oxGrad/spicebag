@@ -1,0 +1,7 @@
+CREATE TABLE scrape_skills (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  keyword TEXT NOT NULL UNIQUE
+);
+
+ALTER TABLE scraped_jobs ADD COLUMN matched_skills TEXT    NOT NULL DEFAULT '';
+ALTER TABLE scraped_jobs ADD COLUMN skill_score    INTEGER NOT NULL DEFAULT 0;
