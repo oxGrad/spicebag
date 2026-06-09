@@ -105,6 +105,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/scrape/prefs", s.handleAPIScrapePrefsUpdate)
 	s.mux.HandleFunc("GET /api/scrape/jobs", s.handleAPIScrapeJobsList)
 	s.mux.HandleFunc("POST /api/scrape/jobs/{id}/status", s.handleAPIScrapeJobStatus)
+	s.mux.HandleFunc("GET /api/scrape/boards", s.handleAPIBoardsList)
+	s.mux.HandleFunc("POST /api/scrape/boards/{id}/toggle", s.handleAPIBoardToggle)
+	s.mux.HandleFunc("GET /api/board-jobs", s.handleAPIBoardJobsList)
+	s.mux.HandleFunc("POST /api/board-jobs/{id}/status", s.handleAPIBoardJobStatus)
 
 	s.mux.HandleFunc("/", s.handleSPA)
 }

@@ -194,3 +194,65 @@ func (s *Server) handleAPIScrapeSkillDelete(w http.ResponseWriter, r *http.Reque
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (s *Server) handleAPIBoardsList(w http.ResponseWriter, r *http.Request) {
+	bs, err := s.store.ListScrapeBoards()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if bs == nil {
+		bs = []db.ScrapeBoard{}
+	}
+	writeJSON(w, bs)
+}
+
+func (s *Server) handleAPIBoardToggle(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	enabled := r.FormValue("enabled") == "1"
+	if err := s.store.ToggleScrapeBoard(id, enabled); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleAPIBoardJobsList(w http.ResponseWriter, r *http.Request) {
+	status := r.URL.Query().Get("status")
+	if status == "" {
+		status = "new"
+	}
+	jobs, err := s.store.ListBoardJobs(status)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if jobs == nil {
+		jobs = []db.BoardJob{}
+	}
+	writeJSON(w, jobs)
+}
+
+func (s *Server) handleAPIBoardJobStatus(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(r, "id")
+	if !ok {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	status := r.FormValue("status")
+	switch status {
+	case "new", "dismissed":
+	default:
+		http.Error(w, "status must be new or dismissed", http.StatusBadRequest)
+		return
+	}
+	if err := s.store.SetBoardJobStatus(id, status); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

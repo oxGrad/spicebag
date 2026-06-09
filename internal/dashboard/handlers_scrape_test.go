@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/oxGrad/spicebag/internal/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,4 +91,78 @@ func TestScrapeSkillAddListDelete(t *testing.T) {
 	w3 := httptest.NewRecorder()
 	srv.ServeHTTP(w3, req3)
 	assert.Equal(t, http.StatusNoContent, w3.Code)
+}
+
+func TestBoardToggleAndList(t *testing.T) {
+	srv := newTestServer(t)
+
+	// list returns all 4 seeded boards
+	req := httptest.NewRequest(http.MethodGet, "/api/scrape/boards", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	var boards []map[string]any
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &boards))
+	require.Len(t, boards, 4)
+
+	// find remotive id
+	var remotiveID float64
+	for _, b := range boards {
+		if b["name"] == "remotive" {
+			remotiveID = b["id"].(float64)
+			assert.Equal(t, true, b["enabled"])
+		}
+	}
+	require.NotZero(t, remotiveID)
+
+	// toggle off
+	form := strings.NewReader("enabled=0")
+	toggleReq := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/scrape/boards/%d/toggle", int(remotiveID)), form)
+	toggleReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	tw := httptest.NewRecorder()
+	srv.ServeHTTP(tw, toggleReq)
+	assert.Equal(t, http.StatusNoContent, tw.Code)
+
+	// verify disabled
+	req2 := httptest.NewRequest(http.MethodGet, "/api/scrape/boards", nil)
+	w2 := httptest.NewRecorder()
+	srv.ServeHTTP(w2, req2)
+	var boards2 []map[string]any
+	json.Unmarshal(w2.Body.Bytes(), &boards2)
+	for _, b := range boards2 {
+		if b["name"] == "remotive" {
+			assert.Equal(t, false, b["enabled"])
+		}
+	}
+}
+
+func TestBoardJobsListAndStatus(t *testing.T) {
+	srv := newTestServer(t)
+	store := srv.Store()
+
+	store.SaveBoardJobs([]db.BoardJob{
+		{SourceBoard: "remotive", CompanyName: "Acme", Title: "SRE", Location: "Worldwide", URL: "https://remotive.com/1", MatchReason: "worldwide"},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/board-jobs?status=new", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "SRE")
+
+	var jobs []map[string]any
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobs))
+	id := int(jobs[0]["id"].(float64))
+
+	form := strings.NewReader("status=dismissed")
+	statusReq := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/board-jobs/%d/status", id), form)
+	statusReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	sw := httptest.NewRecorder()
+	srv.ServeHTTP(sw, statusReq)
+	assert.Equal(t, http.StatusNoContent, sw.Code)
+
+	req2 := httptest.NewRequest(http.MethodGet, "/api/board-jobs?status=new", nil)
+	w2 := httptest.NewRecorder()
+	srv.ServeHTTP(w2, req2)
+	assert.Equal(t, "[]", strings.TrimSpace(w2.Body.String()))
 }
