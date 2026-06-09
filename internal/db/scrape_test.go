@@ -135,6 +135,57 @@ func TestApplyLinkageByURL(t *testing.T) {
 	assert.True(t, apps[0].FromScrape)
 }
 
+func TestScrapeSkillsCRUD(t *testing.T) {
+	store := openTestStore(t)
+
+	s, err := store.AddScrapeSkill("Go")
+	require.NoError(t, err)
+	assert.Greater(t, s.ID, int64(0))
+	assert.Equal(t, "Go", s.Keyword)
+
+	skills, err := store.ListScrapeSkills()
+	require.NoError(t, err)
+	require.Len(t, skills, 1)
+	assert.Equal(t, "Go", skills[0].Keyword)
+
+	require.NoError(t, store.DeleteScrapeSkill(s.ID))
+	skills, err = store.ListScrapeSkills()
+	require.NoError(t, err)
+	assert.Len(t, skills, 0)
+}
+
+func TestScrapedJobsSaveWithSkillScore(t *testing.T) {
+	store := openTestStore(t)
+	c, _ := store.AddScrapeCompany(db.ScrapeCompany{
+		Name: "Acme", ATSPlatform: "greenhouse", ATSToken: "acme", CareersURL: "u",
+	})
+
+	jobs := []db.ScrapedJob{
+		{
+			CompanyID: c.ID, CompanyName: "Acme",
+			Title: "Go SRE", Location: "Remote", URL: "https://j/1",
+			MatchReason: "worldwide remote · Go", MatchedSkills: "Go", SkillScore: 1,
+		},
+		{
+			CompanyID: c.ID, CompanyName: "Acme",
+			Title: "Go Kubernetes Platform Engineer", Location: "Remote APAC", URL: "https://j/2",
+			MatchReason: "APAC includes UTC+7 · Go,Kubernetes", MatchedSkills: "Go,Kubernetes", SkillScore: 2,
+		},
+	}
+	added, err := store.SaveScrapedJobs(jobs)
+	require.NoError(t, err)
+	assert.Equal(t, 2, added)
+
+	list, err := store.ListScrapedJobs("new")
+	require.NoError(t, err)
+	require.Len(t, list, 2)
+	// higher skill_score sorts first
+	assert.Equal(t, "Go Kubernetes Platform Engineer", list[0].Title)
+	assert.Equal(t, "Go,Kubernetes", list[0].MatchedSkills)
+	assert.Equal(t, 2, list[0].SkillScore)
+	assert.Equal(t, "Go", list[1].MatchedSkills)
+}
+
 func mustList(t *testing.T, store *db.Store, status string) []db.ScrapedJob {
 	t.Helper()
 	l, err := store.ListScrapedJobs(status)

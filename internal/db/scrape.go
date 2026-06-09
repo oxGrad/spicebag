@@ -23,6 +23,11 @@ type ScrapeRole struct {
 	Keyword string `json:"keyword"`
 }
 
+type ScrapeSkill struct {
+	ID      int64  `json:"id"`
+	Keyword string `json:"keyword"`
+}
+
 type ScrapePrefs struct {
 	HomeTimezone  string `json:"home_timezone"`
 	LocationNotes string `json:"location_notes"`
@@ -116,6 +121,38 @@ func (s *Store) DeleteScrapeRole(id int64) error {
 	return err
 }
 
+func (s *Store) AddScrapeSkill(keyword string) (ScrapeSkill, error) {
+	res, err := s.db.Exec(`INSERT INTO scrape_skills (keyword) VALUES (?)`, keyword)
+	if err != nil {
+		return ScrapeSkill{}, err
+	}
+	id, _ := res.LastInsertId()
+	return ScrapeSkill{ID: id, Keyword: keyword}, nil
+}
+
+func (s *Store) ListScrapeSkills() ([]ScrapeSkill, error) {
+	rows, err := s.db.Query(`SELECT id, keyword FROM scrape_skills ORDER BY keyword`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []ScrapeSkill
+	for rows.Next() {
+		var sk ScrapeSkill
+		if err := rows.Scan(&sk.ID, &sk.Keyword); err != nil {
+			return nil, err
+		}
+		out = append(out, sk)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) DeleteScrapeSkill(id int64) error {
+	_, err := s.db.Exec(`DELETE FROM scrape_skills WHERE id=?`, id)
+	return err
+}
+
 func (s *Store) GetScrapePrefs() (ScrapePrefs, error) {
 	var p ScrapePrefs
 	err := s.db.QueryRow(
@@ -140,6 +177,8 @@ type ScrapedJob struct {
 	Location             string        `json:"location"`
 	URL                  string        `json:"url"`
 	MatchReason          string        `json:"match_reason"`
+	MatchedSkills        string        `json:"matched_skills"`
+	SkillScore           int           `json:"skill_score"`
 	Status               string        `json:"status"`
 	ScrapedAt            string        `json:"scraped_at"`
 	AppliedApplicationID sql.NullInt64 `json:"applied_application_id"`
@@ -152,9 +191,9 @@ func (s *Store) SaveScrapedJobs(jobs []ScrapedJob) (int, error) {
 	for _, j := range jobs {
 		res, err := s.db.Exec(
 			`INSERT OR IGNORE INTO scraped_jobs
-			   (company_id, company_name, title, location, url, match_reason)
-			 VALUES (?, ?, ?, ?, ?, ?)`,
-			j.CompanyID, j.CompanyName, j.Title, j.Location, j.URL, j.MatchReason,
+			   (company_id, company_name, title, location, url, match_reason, matched_skills, skill_score)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			j.CompanyID, j.CompanyName, j.Title, j.Location, j.URL, j.MatchReason, j.MatchedSkills, j.SkillScore,
 		)
 		if err != nil {
 			return added, err
@@ -169,8 +208,9 @@ func (s *Store) SaveScrapedJobs(jobs []ScrapedJob) (int, error) {
 func (s *Store) ListScrapedJobs(status string) ([]ScrapedJob, error) {
 	rows, err := s.db.Query(
 		`SELECT id, company_id, company_name, title, location, url, match_reason,
-		        status, scraped_at, applied_application_id
-		 FROM scraped_jobs WHERE status=? ORDER BY id DESC`, status)
+		        matched_skills, skill_score, status, scraped_at, applied_application_id
+		 FROM scraped_jobs WHERE status=?
+		 ORDER BY skill_score DESC, scraped_at DESC`, status)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +220,8 @@ func (s *Store) ListScrapedJobs(status string) ([]ScrapedJob, error) {
 	for rows.Next() {
 		var j ScrapedJob
 		if err := rows.Scan(&j.ID, &j.CompanyID, &j.CompanyName, &j.Title, &j.Location,
-			&j.URL, &j.MatchReason, &j.Status, &j.ScrapedAt, &j.AppliedApplicationID); err != nil {
+			&j.URL, &j.MatchReason, &j.MatchedSkills, &j.SkillScore,
+			&j.Status, &j.ScrapedAt, &j.AppliedApplicationID); err != nil {
 			return nil, err
 		}
 		out = append(out, j)
