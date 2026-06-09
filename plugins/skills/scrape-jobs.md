@@ -1,30 +1,32 @@
 ---
 name: scrape-jobs
-description: Scrape job vacancies from your registered ATS companies, filter them by your timezone/region/role/skill preferences, and save the matches for review in the dashboard.
+description: Scrape job vacancies from public job boards, filter them by your timezone/region/role/skill preferences, and save the matches for review in the dashboard.
 ---
 
-Scrape and filter job vacancies from the user's registered ATS company career pages.
+Scrape and filter job vacancies from public job boards.
 
 ## Process
 
 ### 1. Load preferences
 
-Call `get_scrape_preferences`. It returns `companies`, `roles`, `skills`, `home_timezone`,
+Call `get_scrape_preferences`. It returns `roles`, `skills`, `boards`, `home_timezone`,
 and `location_notes`.
 
 Stop early and tell the user to configure the dashboard **Settings → Job
-Scraping** sections if any of these are empty:
-- no `companies` — "Add at least one company (paste a careers URL) in Settings."
+Scraping** sections if any of these are empty or missing:
 - both `roles` and `skills` are empty — "Add at least one target role or skill in Settings."
 - empty `home_timezone` or `location_notes` — "Set your Location Preferences in Settings."
 
+If `boards` is empty (all boards disabled), warn: "All job boards are disabled — enable at least
+one in Settings → Job Scraping → Job Boards." Do **not** stop; continue with zero results.
+
 ### 2. Fetch listings
 
-Call `fetch_ats_jobs` (no arguments). It returns:
-- `jobs`: `[{company_id, company, title, location, url}]` — already coarse-filtered for a remote signal
-- `errors`: `[{company, error}]` — companies that failed this run (already recorded for the dashboard)
+Call `fetch_board_jobs` (no arguments). It returns:
+- `jobs`: `[{board, company_name, title, location, url}]` — already coarse-filtered for a remote signal
+- `errors`: `[{board, error}]` — boards that failed this run (already recorded for the dashboard)
 
-Do not abort if some companies errored; continue with the jobs you did get.
+Do not abort if some boards errored; continue with the jobs you did get.
 
 ### 3. Judge each job
 
@@ -53,8 +55,8 @@ For each kept job, record:
 
 ### 4. Save matches
 
-Call `save_scraped_jobs` with the kept jobs as a JSON array of
-`{company_id, title, location, url, match_reason, matched_skills, skill_score}`.
+Call `save_board_jobs` with the kept jobs as a JSON array of
+`{source_board, company_name, title, location, url, match_reason, matched_skills, skill_score}`.
 It ignores URLs already saved and returns `{new, already_seen}`.
 
 ### 5. Report
@@ -62,12 +64,12 @@ It ignores URLs already saved and returns `{new, already_seen}`.
 Summarize:
 - "X new matches saved, Y already seen."
 - Break down by match type: "N role-only, M skill-only, K role+skill."
-- If any companies errored: "Z companies failed: Acme (token not found), …"
-- "Open the dashboard **Jobs** page to review and apply."
+- If any boards errored: "Z boards failed: Remotive (network error), …"
+- "Open the dashboard **Board Jobs** page to review and apply."
 
 ## Rules
 
-- Never invent jobs — only judge and save what `fetch_ats_jobs` returned.
+- Never invent jobs — only judge and save what `fetch_board_jobs` returned.
 - Location fit is required for all jobs — skills do not override location.
 - Keep `match_reason` to one short line; it shows in the dashboard.
 - Do not fetch full job descriptions here — that happens later via `/apply`.
