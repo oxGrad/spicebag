@@ -205,7 +205,7 @@ func (s *Server) registerFetchBoardJobs() {
 	s.mcpSrv.AddTool(
 		mcplib.NewTool(
 			"fetch_board_jobs",
-			mcplib.WithDescription("Fetch current job listings from all enabled job boards (Remotive, Remote OK, We Work Remotely, Jobicy). Returns a compact list of {board, company_name, title, location, url} plus per-board errors. Records each board's scrape status. Apply timezone/region/role/skill judgment to the returned list, then call save_board_jobs with the matches."),
+			mcplib.WithDescription("Fetch current job listings from all enabled job boards (Remotive, Remote OK, We Work Remotely, Jobicy). Returns a compact list of {source_board, company_name, title, location, url} plus per-board errors. Records each board's scrape status. Apply timezone/region/role/skill judgment to the returned list, then call save_board_jobs with the matches."),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			boards, err := s.store.ListScrapeBoards()
@@ -215,7 +215,7 @@ func (s *Server) registerFetchBoardJobs() {
 			reg := scrape.BoardRegistry()
 
 			type outJob struct {
-				Board       string `json:"board"`
+				SourceBoard string `json:"source_board"`
 				CompanyName string `json:"company_name"`
 				Title       string `json:"title"`
 				Location    string `json:"location"`
@@ -258,8 +258,8 @@ func (s *Server) registerFetchBoardJobs() {
 						continue
 					}
 					jobs = append(jobs, outJob{
-						Board: b.Name, CompanyName: j.CompanyName,
-						Title: j.Title, Location: j.Location, URL: j.URL,
+						SourceBoard: b.Name, CompanyName: j.CompanyName,
+						Title:       j.Title, Location: j.Location, URL: j.URL,
 					})
 					kept++
 				}
