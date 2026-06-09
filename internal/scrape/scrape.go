@@ -105,3 +105,27 @@ func ClassifyError(platform string, err error) string {
 		return err.Error()
 	}
 }
+
+// BoardJob is a single vacancy as returned by a board adapter.
+type BoardJob struct {
+	CompanyName string
+	Title       string
+	Location    string
+	URL         string
+}
+
+// BoardAdapter fetches jobs from a public job board with no per-company token.
+type BoardAdapter interface {
+	Name() string
+	FetchJobs(ctx context.Context) ([]BoardJob, error)
+}
+
+// BoardRegistry returns all supported board adapters keyed by their name.
+func BoardRegistry() map[string]BoardAdapter {
+	return map[string]BoardAdapter{
+		"remotive":       Remotive{},
+		"remoteok":       RemoteOK{},
+		"weworkremotely": WeWorkRemotely{},
+		"jobicy":         Jobicy{},
+	}
+}
