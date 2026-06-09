@@ -46,9 +46,9 @@ func (w WeWorkRemotely) FetchJobs(ctx context.Context) ([]BoardJob, error) {
 
 // splitWWRTitle splits "Company Name: Job Title" into its two parts.
 func splitWWRTitle(raw string) (company, title string) {
-	idx := strings.Index(raw, ": ")
-	if idx < 0 {
+	company, title, ok := strings.Cut(raw, ": ")
+	if !ok {
 		return "", strings.TrimSpace(raw)
 	}
-	return strings.TrimSpace(raw[:idx]), strings.TrimSpace(raw[idx+2:])
+	return strings.TrimSpace(company), strings.TrimSpace(title)
 }

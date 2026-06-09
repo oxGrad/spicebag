@@ -22,10 +22,11 @@ func (r RemoteOK) FetchJobs(ctx context.Context) ([]BoardJob, error) {
 		return nil, err
 	}
 	var raw []json.RawMessage
-	if err := json.Unmarshal(body, &raw); err != nil || len(raw) < 2 {
+	if err := json.Unmarshal(body, &raw); err != nil || len(raw) == 0 {
 		return nil, fmt.Errorf("parse: %w", ErrUnexpectedFormat)
 	}
 	var out []BoardJob
+	// raw[0] is always the legal notice; raw[1:] may be empty
 	for _, item := range raw[1:] { // first element is a legal notice object
 		var j struct {
 			Position string `json:"position"`
