@@ -1,0 +1,19 @@
+{
+  "job-count": 2,
+  "jobs": [
+    {
+      "id": 1001,
+      "url": "https://remotive.com/remote-jobs/devops/senior-sre-1001",
+      "title": "Senior SRE",
+      "company_name": "Acme Corp",
+      "candidate_required_location": "Worldwide"
+    },
+    {
+      "id": 1002,
+      "url": "https://remotive.com/remote-jobs/marketing/office-manager-1002",
+      "title": "Office Manager",
+      "company_name": "Beta Corp",
+      "candidate_required_location": "New York, NY"
+    }
+  ]
+}
