@@ -17,7 +17,7 @@ func (s *Server) registerScrapeTools() {
 	s.mcpSrv.AddTool(
 		mcplib.NewTool(
 			"get_scrape_preferences",
-			mcplib.WithDescription("Return the user's saved job-scraping companies, target roles, and location preferences (home timezone + notes) used to judge job fit."),
+			mcplib.WithDescription("Return the user's saved job-scraping companies, target roles, target skills, and location preferences (home timezone + notes) used to judge job fit."),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			companies, err := s.store.ListScrapeCompanies()
@@ -65,7 +65,7 @@ func (s *Server) registerFetchATSJobs() {
 	s.mcpSrv.AddTool(
 		mcplib.NewTool(
 			"fetch_ats_jobs",
-			mcplib.WithDescription("Fetch current job listings from all registered ATS companies. Returns a compact list of {company_id, company, title, location, url} plus per-company errors. Records each company's scrape status. Apply timezone/region/role judgment to the returned list, then call save_scraped_jobs with the matches."),
+			mcplib.WithDescription("Fetch current job listings from all registered ATS companies. Returns a compact list of {company_id, company, title, location, url} plus per-company errors. Records each company's scrape status. Apply timezone/region/role/skill judgment to the returned list, then call save_scraped_jobs with the matches."),
 		),
 		func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 			companies, err := s.store.ListScrapeCompanies()
@@ -143,7 +143,7 @@ func (s *Server) registerSaveScrapedJobs() {
 	s.mcpSrv.AddTool(
 		mcplib.NewTool(
 			"save_scraped_jobs",
-			mcplib.WithDescription("Save matched jobs (those that pass the user's timezone/region/role rule). Jobs whose URL already exists are ignored. Returns counts of new vs already-seen."),
+			mcplib.WithDescription("Save matched jobs (those that pass the user's timezone/region/role/skill rules). Jobs whose URL already exists are ignored. Returns counts of new vs already-seen."),
 			mcplib.WithString("jobs", mcplib.Required(),
 				mcplib.Description(`JSON array of {"company_id": <id>, "title": "...", "location": "...", "url": "...", "match_reason": "...", "matched_skills": "...", "skill_score": <int>}`)),
 		),
