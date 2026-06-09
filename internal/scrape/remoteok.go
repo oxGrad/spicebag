@@ -1,8 +1,42 @@
 package scrape
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+)
 
+// RemoteOK reads the public API. The first array element is a legal notice and is skipped.
+// BaseURL is overridable in tests; empty means the real endpoint.
 type RemoteOK struct{ BaseURL string }
 
-func (r RemoteOK) Name() string                              { return "remoteok" }
-func (r RemoteOK) FetchJobs(_ context.Context) ([]BoardJob, error) { return nil, nil }
+func (r RemoteOK) Name() string { return "remoteok" }
+
+func (r RemoteOK) FetchJobs(ctx context.Context) ([]BoardJob, error) {
+	base := r.BaseURL
+	if base == "" {
+		base = "https://remoteok.com/api"
+	}
+	body, err := httpGet(ctx, base)
+	if err != nil {
+		return nil, err
+	}
+	var raw []json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil || len(raw) < 2 {
+		return nil, fmt.Errorf("parse: %w", ErrUnexpectedFormat)
+	}
+	var out []BoardJob
+	for _, item := range raw[1:] { // first element is a legal notice object
+		var j struct {
+			Position string `json:"position"`
+			Company  string `json:"company"`
+			Location string `json:"location"`
+			URL      string `json:"url"`
+		}
+		if err := json.Unmarshal(item, &j); err != nil || j.URL == "" {
+			continue
+		}
+		out = append(out, BoardJob{CompanyName: j.Company, Title: j.Position, Location: j.Location, URL: j.URL})
+	}
+	return out, nil
+}

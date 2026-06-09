@@ -1,0 +1,17 @@
+[
+  {"legal": "Remote OK is a remote job board. By accessing this API you agree to our terms of service."},
+  {
+    "id": "2001",
+    "url": "https://remoteok.com/remote-jobs/2001",
+    "position": "DevOps Engineer",
+    "company": "Acme Corp",
+    "location": "Worldwide"
+  },
+  {
+    "id": "2002",
+    "url": "https://remoteok.com/remote-jobs/2002",
+    "position": "Backend Engineer",
+    "company": "Beta Corp",
+    "location": "Remote"
+  }
+]
